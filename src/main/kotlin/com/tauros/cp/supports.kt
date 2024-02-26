@@ -10,7 +10,7 @@ import kotlin.math.abs
  * @author tauros
  * 2023/8/28
  */
-public inline val Char.code: Int get() = this.toInt()
+//public inline val Char.code: Int get() = this.toInt()
 
 // reduce
 public inline fun IntArray.runningReduce(operation: (acc: Int, Int) -> Int): List<Int> {
