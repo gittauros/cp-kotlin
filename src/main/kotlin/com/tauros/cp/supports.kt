@@ -1,6 +1,5 @@
 package com.tauros.cp
 
-import com.tauros.cp.common.MInt
 import com.tauros.cp.common.MIntArray
 import com.tauros.cp.structure.AVLMap
 import com.tauros.cp.structure.AVLSet
