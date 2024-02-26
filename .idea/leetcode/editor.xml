@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="LeetcodeEditor">
+    <option name="projectConfig">
+      <map>
+        <entry key="/var/folders/pp/52tjsp294dq2l9j552yf1h4m0000gn/T/leetcode/editor/cn/[2030]含特定字母的最小子序列.java">
+          <value>
+            <LeetcodeEditor>
+              <option name="contentPath" value="/var/folders/pp/52tjsp294dq2l9j552yf1h4m0000gn/T/leetcode/editor/cn/doc/content/[2030]含特定字母的最小子序列.md" />
+              <option name="frontendQuestionId" value="leetcode.cn2030" />
+              <option name="host" value="leetcode.cn" />
+              <option name="path" value="/var/folders/pp/52tjsp294dq2l9j552yf1h4m0000gn/T/leetcode/editor/cn/[2030]含特定字母的最小子序列.kt" />
+              <option name="titleSlug" value="smallest-k-length-subsequence-with-occurrences-of-a-letter" />
+            </LeetcodeEditor>
+          </value>
+        </entry>
+        <entry key="/var/folders/pp/52tjsp294dq2l9j552yf1h4m0000gn/T/leetcode/editor/cn/[2030]含特定字母的最小子序列.kt">
+          <value>
+            <LeetcodeEditor>
+              <option name="contentPath" value="/var/folders/pp/52tjsp294dq2l9j552yf1h4m0000gn/T/leetcode/editor/cn/doc/content/[2030]含特定字母的最小子序列.md" />
+              <option name="frontendQuestionId" value="leetcode.cn2030" />
+              <option name="host" value="leetcode.cn" />
+              <option name="path" value="/var/folders/pp/52tjsp294dq2l9j552yf1h4m0000gn/T/leetcode/editor/cn/[2030]含特定字母的最小子序列.kt" />
+              <option name="titleSlug" value="smallest-k-length-subsequence-with-occurrences-of-a-letter" />
+            </LeetcodeEditor>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
