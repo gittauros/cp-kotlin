@@ -161,8 +161,9 @@ class HLD<G : Graph>(val g: G, val root: Int, val nodeCnt: Int = g.nodeCap) {
 fun <G : Graph> G.hld(root: Int, nodeCnt: Int = nodeCap) = HLD(this, root, nodeCnt)
 
 // 虚树 auxiliary/virtual tree
-class VirtualTreeBuilder(val originGraph: Graph, val root: Int, val nodeCnt: Int = originGraph.nodeCap) {
-    val tree = Graph(nodeCnt, removeAble = true)
+class VirtualTreeBuilder(val originGraph: Graph, val root: Int,
+                         val nodeCnt: Int = originGraph.nodeCap, needFrom: Boolean = false) {
+    val tree = Graph(nodeCnt, removeAble = true, needFrom = needFrom)
     val hld = originGraph.hld(root, nodeCnt)
     val stack = IntArray(nodeCnt)
 
@@ -195,4 +196,4 @@ class VirtualTreeBuilder(val originGraph: Graph, val root: Int, val nodeCnt: Int
     }
 }
 
-fun Graph.vtBuilder(root: Int, nodeCnt: Int = nodeCap) = VirtualTreeBuilder(this, root, nodeCnt)
+fun Graph.vtBuilder(root: Int, nodeCnt: Int = nodeCap, needFrom: Boolean = false) = VirtualTreeBuilder(this, root, nodeCnt, needFrom)

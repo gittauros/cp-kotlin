@@ -137,7 +137,17 @@ inline fun <reified T> dq() = ArrayDeque<T>()
 fun randomInt(): Int {
     var num = -1
     repeat(abs((System.nanoTime() % 11).toInt()) + 1) {
-        num = num xor System.nanoTime().toInt()
+        val shift = System.nanoTime().toInt() and 15
+        num = num xor (System.nanoTime().toInt() shr shift) xor (System.nanoTime().toInt() shl shift)
+    }
+    return num
+}
+
+fun randomLong(): Long {
+    var num = -1L
+    repeat(abs((System.nanoTime() % 11).toInt()) + 1) {
+        val shift = (System.nanoTime() and 31).toInt()
+        num = num xor (System.nanoTime() shr shift) xor (System.nanoTime() shl shift)
     }
     return num
 }
