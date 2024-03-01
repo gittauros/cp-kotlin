@@ -1,20 +1,27 @@
-#if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")package ${PACKAGE_NAME}
+package com.tauros.cp.archive.daily
 
-#end
 import com.tauros.cp.FastReader
 import com.tauros.cp.FastWriter
 
 /**
  * @author tauros
- * $DATE
+ * 2024/2/29
  */
 private val bufCap = 65536
 private val rd = FastReader(System.`in`, bufCap)
 private val wt = FastWriter(System.out, bufCap)
-private val INF = 0x3f3f3f3f
-private val INF_LONG = 0x3f3f3f3f3f3f3f3fL
 
 private fun solve() {
+    val cases = rd.ni()
+    repeat(cases) {
+        val n = rd.ni()
+        if (n == 1) {
+            wt.println(1)
+            return@repeat
+        }
+        val ans = n.takeHighestOneBit()
+        wt.println(ans)
+    }
 }
 
 fun main(args: Array<String>) {
