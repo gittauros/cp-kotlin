@@ -26,6 +26,25 @@ inline fun IntArray.mergeSort(fromIndex: Int = 0, toIndex: Int = size, temp: Int
     }
 }
 
+inline fun LongArray.mergeSort(fromIndex: Int = 0, toIndex: Int = size, temp: LongArray = LongArray(toIndex - fromIndex), comparator: (Long, Long) -> Int) {
+    val (base, len) = fromIndex to toIndex - fromIndex
+    var (range, half) = 2 to 1
+    while (half < len) {
+        for (i in 0 until len step range) {
+            val (st, mid, ed) = intArrayOf(i, minOf(i + half, len), minOf(i + range, len))
+            var (l, r, iter) = intArrayOf(st, mid, st)
+            while (l < mid || r < ed) {
+                temp[iter++] =
+                    if (r >= ed || l < mid && comparator(this[base + l], this[base + r]) <= 0) this[base + l++]
+                    else this[base + r++]
+            }
+            for (j in st until ed) this[base + j] = temp[j]
+        }
+        half = range
+        range = range shl 1
+    }
+}
+
 inline fun IntArray.heapSort(from: Int, to: Int = size, comparator: (Int, Int) -> Int = Int::compareTo) {
     val len = to - from
     if (len <= 1) return
