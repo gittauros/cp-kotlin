@@ -150,7 +150,7 @@ abstract class BlockSortedList<K>(val blockSize: Int = DEFAULT_BLOCK_SIZE, compa
                 add(new); iter = new;
                 leafOffset += iter.size
             }
-        }.reversed().toTypedArray().reduce(IntArray::plus)
+        }.reversed().reduce(IntArray::plus)
     }
     protected fun position(index: Int): Pair<Int, Int> {
         indexCheck(index)
