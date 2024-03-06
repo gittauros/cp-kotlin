@@ -25,11 +25,9 @@ fun main(args: Array<String>) {
 
     withMod(1e9.toInt() + 7) {
         val transferArr = ar(x) { iar(x) }
-        withMod(x) {
-            for (from in 0 until x) for (num in 1..9) if (cnt[num - 1] > 0) {
-                val to = from mm 10 ma num
-                transferArr[to][from] += cnt[num - 1]
-            }
+        for (from in 0 until x) for (num in 1..9) if (cnt[num - 1] > 0) {
+            val to = withMod(x) { from mm 10 ma num }
+            transferArr[to][from] = transferArr[to][from] ma cnt[num - 1]
         }
         val transferMat = Matrix(transferArr).pow(b - 1)
         val initArr = iar(x)

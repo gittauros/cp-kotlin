@@ -35,22 +35,27 @@ class Matrix(val rows: Int, val cols: Int = rows, elements: IntArray = IntArray(
     operator fun get(idx: Int) = IntArrayView(idx * cols, this)
     operator fun plus(other: Matrix): Matrix {
         return Matrix(rows, cols, IntArray(rows * cols) {
-            if (MOD.globalMod > 0) {
-                elements[it] ma other.elements[it]
-            } else {
-                elements[it] + other.elements[it]
-            }
+            if (MOD.globalMod > 0) elements[it] ma other.elements[it]
+            else elements[it] + other.elements[it]
         })
     }
     operator fun times(other: Matrix): Matrix {
         val ans = IntArray(rows * other.cols)
         if (MOD.globalMod > 0) {
-            for (i in 0 until rows) for (j in 0 until other.cols) {
-                var sum = 0
+            var (otherIRow, thisIRow) = 0 to 0
+            for (i in 0 until rows) {
+                var otherKRow = 0
                 for (k in 0 until cols) {
-                    sum = elements[i * cols + k] mm other.elements[k * other.cols + j] ma sum
+                    val thisCell = elements[thisIRow + k].toLong()
+                    if (thisCell != 0L) {
+                        for (j in 0 until other.cols) {
+                            ans[otherIRow + j] += (thisCell * other.elements[otherKRow + j] % MOD.globalMod).toInt()
+                            if (ans[otherIRow + j] >= MOD.globalMod) ans[otherIRow + j] -= MOD.globalMod
+                        }
+                    }
+                    otherKRow += other.cols
                 }
-                ans[i * other.cols + j] = sum
+                otherIRow += other.cols; thisIRow += cols
             }
         } else {
             for (i in 0 until rows) for (k in 0 until cols) {
@@ -67,11 +72,8 @@ class Matrix(val rows: Int, val cols: Int = rows, elements: IntArray = IntArray(
         var (a, p) = this to exp
         var ans: Matrix = one(rows)
         while (p > 0) {
-            if (p and 1L == 1L) {
-                ans *= a
-            }
-            a *= a
-            p = p shr 1
+            if (p and 1L == 1L) ans *= a
+            a *= a; p = p shr 1
         }
         return ans
     }

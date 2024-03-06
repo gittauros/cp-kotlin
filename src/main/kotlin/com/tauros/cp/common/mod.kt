@@ -11,58 +11,31 @@ class MOD {
         private val INV_MAP = mutableMapOf<Int, MutableMap<Int, Int>>()
         private val INV_LONG_MAP = mutableMapOf<Int, MutableMap<Long, Int>>()
         var globalMod: Int = 0
-
         fun inv(num: Int): Int = INV_MAP.computeIfAbsent(globalMod) { mutableMapOf() }.computeIfAbsent(num) { inv(num, globalMod) }
-
         fun inv(num: Long): Int = INV_LONG_MAP.computeIfAbsent(globalMod) { mutableMapOf() }.computeIfAbsent(num) { inv(num, globalMod.toLong()).toInt() }
-
         fun pow(num: Long, p: Long): Int {
-            var pow = p
-            var a = num
-            if (a >= globalMod) {
-                a %= globalMod.toLong()
-            }
+            var (pow, a) = p to num
+            if (a >= globalMod) a %= globalMod.toLong()
             var res: Long = 1
             while (pow > 0) {
-                if (pow and 1 == 1L) {
-                    res = res * a % globalMod
-                }
+                if (pow and 1 == 1L) res = res * a % globalMod
                 a = a * a % globalMod
                 pow = pow shr 1
             }
             return res.toInt()
         }
-
-        inline fun regular(num: Int): Int = if (num in 0 until globalMod) num else {
+        fun regular(num: Int): Int = if (num in 0 until globalMod) num else {
             val r = num % globalMod
-            r + (globalMod and (((r xor globalMod) and (r or -r)) shr 31))
+            if (r < 0) r + globalMod else r
         }
-
-        inline fun regular(num: Long): Int = if (num in 0 until globalMod) num.toInt() else {
+        fun regular(num: Long): Int = if (num in 0 until globalMod) num.toInt() else {
             val r = (num % globalMod).toInt()
-            r + (globalMod and (((r xor globalMod) and (r or -r)) shr 31))
+            if (r < 0) r + globalMod else r
         }
-
-        inline fun add(a: Int, b: Int): Int {
-            val res = regular(a) + regular(b)
-            return regular(res)
-        }
-
-        inline fun sub(a: Int, b: Int): Int {
-            val res = regular(a) - regular(b)
-            return regular(res)
-        }
-
-        inline fun mul(a: Int, b: Int): Int {
-            val res = regular(a).toLong() * regular(b)
-            return regular(res)
-        }
-
-        inline fun div(a: Int, b: Int): Int {
-            val res = regular(a).toLong() * inv(regular(b))
-            return regular(res)
-        }
-
+        fun add(a: Int, b: Int) = regular(a + b)
+        fun sub(a: Int, b: Int) = regular(a - b)
+        fun mul(a: Int, b: Int) = regular(a.toLong() * b)
+        fun div(a: Int, b: Int) = regular(a.toLong() * inv(regular(b)))
         inline fun <T> decorate(mod: Int, process: Companion.() -> T): T {
             val preGlobal = globalMod
             globalMod = mod
@@ -73,9 +46,7 @@ class MOD {
     }
 }
 
-inline fun <T> withMod(mod: Int, process: MOD.Companion.() -> T): T {
-    return MOD.decorate(mod, process)
-}
+inline fun <T> withMod(mod: Int, process: MOD.Companion.() -> T) = MOD.decorate(mod, process)
 
 infix fun Int.ma(other: Int): Int = MOD.add(this, other)
 infix fun Int.ms(other: Int): Int = MOD.sub(this, other)
@@ -105,48 +76,34 @@ class MInt(raw: Int) {
         val ONE = MInt(1)
     }
     val num = MOD.regular(raw)
-
-    operator fun plus(other: Int): MInt = MInt(num ma other)
-    operator fun minus(other: Int): MInt = MInt(num ms other)
-    operator fun times(other: Int): MInt = MInt(num mm other)
-    operator fun div(other: Int): MInt = MInt(num md other)
-
-    operator fun plus(other: Long): MInt = MInt(num ma other)
-    operator fun minus(other: Long): MInt = MInt(num ms other)
-    operator fun times(other: Long): MInt = MInt(num mm other)
-    operator fun div(other: Long): MInt = MInt(num md other)
-
     operator fun plus(other: MInt): MInt = MInt(num ma other.num)
     operator fun minus(other: MInt): MInt = MInt(num ms other.num)
     operator fun times(other: MInt): MInt = MInt(num mm other.num)
     operator fun div(other: MInt): MInt = MInt(num md other.num)
-
     fun pow(exp: Int) = MOD.pow(num.toLong(), exp.toLong()).toMInt()
     fun pow(exp: Long) = MOD.pow(num.toLong(), exp).toMInt()
-
-    fun toInt(): Int {
-        return num
-    }
-
-    override fun toString(): String {
-        return num.toString()
-    }
-
+    fun toInt() = num
+    override fun toString() = num.toString()
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as MInt
         return num == other.num
     }
-
-    override fun hashCode(): Int {
-        return num
-    }
-
+    override fun hashCode() = num.hashCode()
     operator fun compareTo(other: MInt): Int = num.compareTo(other.num)
     operator fun compareTo(other: Int): Int = num.compareTo(other)
     operator fun compareTo(other: Long): Int = num.compareTo(other)
 }
+
+operator fun MInt.plus(other: Int): MInt = MInt(num ma other)
+operator fun MInt.minus(other: Int): MInt = MInt(num ms other)
+operator fun MInt.times(other: Int): MInt = MInt(num mm other)
+operator fun MInt.div(other: Int): MInt = MInt(num md other)
+operator fun MInt.plus(other: Long): MInt = MInt(num ma other)
+operator fun MInt.minus(other: Long): MInt = MInt(num ms other)
+operator fun MInt.times(other: Long): MInt = MInt(num mm other)
+operator fun MInt.div(other: Long): MInt = MInt(num md other)
 
 fun Int.toMInt(): MInt = MInt(this)
 fun Long.toMInt(): MInt = MInt(MOD.regular(this))
