@@ -5,7 +5,6 @@ import com.tauros.cp.common.int
 import com.tauros.cp.common.mergeSort
 import com.tauros.cp.iao
 import com.tauros.cp.iar
-import com.tauros.cp.mmo
 import kotlin.math.abs
 import kotlin.random.Random
 
@@ -46,7 +45,7 @@ abstract class BlockSortedList<K>(val blockSize: Int = DEFAULT_BLOCK_SIZE, compa
     protected var len = 0
     abstract class ValueList<K>(protected val blockSize: Int, protected val comparator: Comparator<K>) : Iterable<K> {
         abstract val size: Int
-        fun newCapacity(blockSize: Int) = minOf(1e8.toInt(), maxOf(5, size + minOf((size shr 1), blockSize)))
+        fun newCapacity(old: Int, blockSize: Int) = minOf(1e8.toInt(), maxOf(5, old + minOf((old shr 1), blockSize)))
         abstract fun add(element: K)
         abstract fun add(index: Int, element: K)
         abstract fun addAll(other: ValueList<K>)
@@ -449,7 +448,10 @@ class IntBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Int, 
         }
         private fun ensureCapacity(newSize: Int) {
             if (newSize <= array.size) return
-            val new = newCapacity(blockSize)
+            var new = array.size
+            while (new < newSize) {
+                new = newCapacity(new, blockSize)
+            }
             array += IntArray(new - array.size)
         }
     }
@@ -559,7 +561,10 @@ class LongBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Long
         }
         private fun ensureCapacity(newSize: Int) {
             if (newSize <= array.size) return
-            val new = newCapacity(blockSize)
+            var new = array.size
+            while (new < newSize) {
+                new = newCapacity(new, blockSize)
+            }
             array += LongArray(new - array.size)
         }
     }
@@ -598,9 +603,20 @@ class LongBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Long
  * 9 x lowerIndex
 **/
 private fun randomTestCases(opCount: Int, valCap: Int) = buildList {
-    val cnt = mmo<int, int>().default { 0 }
-    val sorted = mutableListOf<Int>()
-    var size = 0
+    fun IntArray.update(pos: Int, add: Int) = this.bitUpdateWithIndex(pos) { this[it] += add }
+    fun IntArray.query(pos: Int) = this.bitQuery(pos, 0, int::plus)
+    fun IntArray.add(num: Int) { this.update(num, 1) }
+    fun IntArray.addAll(nums: Collection<Int>) { for (num in nums) add(num) }
+    fun IntArray.remove(num: Int) { this.update(num, -1) }
+    fun IntArray.at(i: Int) = findFirst(1, valCap) { this.query(it) > i }
+    fun IntArray.removeAt(i: Int) = this.update(at(i), -1)
+    fun IntArray.count(num: Int) = this.query(num) - this.query(num - 1)
+    fun IntArray.ceilingIndex(num: Int) = this.query(num - 1)
+    fun IntArray.higherIndex(num: Int) = this.query(num)
+    fun IntArray.floorIndex(num: Int) = this.query(num) - 1
+    fun IntArray.lowerIndex(num: Int) = this.query(num - 1) - 1
+
+    val bit = iar(valCap + 1)
     fun randomVal() = randomInt(valCap) + 1
     repeat(opCount) {
         while (true) {
@@ -608,39 +624,29 @@ private fun randomTestCases(opCount: Int, valCap: Int) = buildList {
             if (op == 0) {
                 val num = randomVal()
                 add(iao(op, num))
-                cnt[num] += 1
-                sorted.add(num)
-                size += 1
+                bit.add(num)
             } else if (op == 1) {
                 val n = randomInt(3) + 1
                 val new = iar(n) { randomVal() }
                 add(iao(op, n) + new)
-                for (num in new) {
-                    cnt[num] += 1
-                    sorted.add(num)
-                }
-                size += n
+                for (num in new) bit.add(num)
             } else if (op == 2) {
-                if (size == 0) continue
+                if (bit.query(valCap) == 0) continue
                 while (true) {
                     val num = randomVal()
-                    if (cnt[num] == 0) continue
+                    if (bit.count(num) == 0) continue
                     add(iao(op, num))
-                    cnt[num] -= 1
-                    sorted.remove(num)
+                    bit.remove(num)
                     break
                 }
-                size -= 1
             } else if (op == 3) {
-                if (size == 0) continue
-                val i = randomInt(size)
+                if (bit.query(valCap) == 0) continue
+                val i = randomInt(bit.query(valCap))
                 add(iao(op, i))
-                sorted.sort()
-                cnt[sorted.removeAt(i)] -= 1
-                size -= 1
+                bit.removeAt(i)
             } else if (op == 4) {
-                if (size == 0) continue
-                val i = randomInt(size)
+                if (bit.query(valCap) == 0) continue
+                val i = randomInt(bit.query(valCap))
                 add(iao(op, i))
             } else {
                 add(iao(op, randomVal()))
@@ -753,7 +759,7 @@ private fun testIntBlockSortedList(opCount: Int, valCap: Int): String {
 private fun randomInt(cap: Int) = abs(Random.nextInt()) % cap
 fun main() {
     repeat(100) {
-        val res = testIntBlockSortedList(500000, randomInt(1000000) + 1)
+        val res = testIntBlockSortedList(randomInt(200000) + 1, randomInt(2000000) + 1)
         println(res)
     }
 }

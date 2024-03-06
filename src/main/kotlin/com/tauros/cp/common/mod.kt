@@ -64,9 +64,10 @@ class MOD {
         }
 
         inline fun <T> decorate(mod: Int, process: Companion.() -> T): T {
+            val preGlobal = globalMod
             globalMod = mod
             val res = process(Companion)
-            globalMod = 0
+            globalMod = preGlobal
             return res
         }
     }
