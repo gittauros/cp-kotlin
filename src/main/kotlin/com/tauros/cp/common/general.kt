@@ -107,6 +107,19 @@ fun sqrt(n: Long): Long {
     return x
 }
 
+// pow p int
+fun pow(a: Double, p: Int): Double {
+    var res = 1.0
+    var base = a
+    var rest = p
+    while (rest > 0) {
+        if (rest and 1 == 1) res *= base
+        base *= base
+        rest = rest shr 1
+    }
+    return res
+}
+
 fun pow(a: Int, p: Int) = pow(a.toLong(), p).toInt()
 fun pow(a: Long, p: Int): Long {
     var res = 1L
@@ -127,6 +140,45 @@ fun pow(a: Long, p: Int, mod: Int): Int {
     var rest = p
     while (rest > 0) {
         if (rest and 1 == 1) res = res * base % mod
+        base = base * base % mod
+        rest = rest shr 1
+    }
+    return res.toInt()
+}
+
+// pow p long
+fun pow(a: Double, p: Long): Double {
+    var res = 1.0
+    var base = a
+    var rest = p
+    while (rest > 0) {
+        if (rest and 1L == 1L) res *= base
+        base *= base
+        rest = rest shr 1
+    }
+    return res
+}
+
+fun pow(a: Int, p: Long) = pow(a.toLong(), p).toInt()
+fun pow(a: Long, p: Long): Long {
+    var res = 1L
+    var base = a
+    var rest = p
+    while (rest > 0) {
+        if (rest and 1L == 1L) res *= base
+        base *= base
+        rest = rest shr 1
+    }
+    return res
+}
+
+fun pow(a: Int, p: Long, mod: Int) = pow(a.toLong(), p, mod)
+fun pow(a: Long, p: Long, mod: Int): Int {
+    var res = 1L
+    var base = a
+    var rest = p
+    while (rest > 0) {
+        if (rest and 1L == 1L) res = res * base % mod
         base = base * base % mod
         rest = rest shr 1
     }
