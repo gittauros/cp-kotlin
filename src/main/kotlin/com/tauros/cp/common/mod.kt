@@ -80,6 +80,14 @@ class MInt(raw: Int) {
     operator fun minus(other: MInt): MInt = MInt(num ms other.num)
     operator fun times(other: MInt): MInt = MInt(num mm other.num)
     operator fun div(other: MInt): MInt = MInt(num md other.num)
+    operator fun plus(other: Int): MInt = MInt(num ma other)
+    operator fun minus(other: Int): MInt = MInt(num ms other)
+    operator fun times(other: Int): MInt = MInt(num mm other)
+    operator fun div(other: Int): MInt = MInt(num md other)
+    operator fun plus(other: Long): MInt = MInt(num ma other)
+    operator fun minus(other: Long): MInt = MInt(num ms other)
+    operator fun times(other: Long): MInt = MInt(num mm other)
+    operator fun div(other: Long): MInt = MInt(num md other)
     fun pow(exp: Int) = MOD.pow(num.toLong(), exp.toLong()).toMInt()
     fun pow(exp: Long) = MOD.pow(num.toLong(), exp).toMInt()
     fun toInt() = num
@@ -95,15 +103,6 @@ class MInt(raw: Int) {
     operator fun compareTo(other: Int): Int = num.compareTo(other)
     operator fun compareTo(other: Long): Int = num.compareTo(other)
 }
-
-operator fun MInt.plus(other: Int): MInt = MInt(num ma other)
-operator fun MInt.minus(other: Int): MInt = MInt(num ms other)
-operator fun MInt.times(other: Int): MInt = MInt(num mm other)
-operator fun MInt.div(other: Int): MInt = MInt(num md other)
-operator fun MInt.plus(other: Long): MInt = MInt(num ma other)
-operator fun MInt.minus(other: Long): MInt = MInt(num ms other)
-operator fun MInt.times(other: Long): MInt = MInt(num mm other)
-operator fun MInt.div(other: Long): MInt = MInt(num md other)
 
 fun Int.toMInt(): MInt = MInt(this)
 fun Long.toMInt(): MInt = MInt(MOD.regular(this))

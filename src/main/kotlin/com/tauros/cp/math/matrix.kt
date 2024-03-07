@@ -1,71 +1,51 @@
 package com.tauros.cp.math
 
 import com.tauros.cp.common.MOD
-import com.tauros.cp.common.ma
-import com.tauros.cp.common.mm
 
 
 /**
  * @author tauros
  * 2023/9/10
  */
-class Matrix(val rows: Int, val cols: Int = rows, elements: IntArray = IntArray(0)) : Iterable<Iterable<Int>>, Cloneable {
-    val elements = IntArray(rows * cols) { if (it >= elements.size) 0 else elements[it] }
-    constructor(matrix: Array<IntArray>) : this(
-        matrix.size, if (matrix.isEmpty()) 0 else matrix[0].size,
-        matrix.flatMap { it.toList() }.toIntArray()
+class Matrix(matrix: Array<IntArray>, clone: Boolean = true) : Iterable<IntArray>, Cloneable {
+    val rows: Int = matrix.size;
+    val cols: Int = matrix[0].size;
+    val elements = if (clone) Array(rows) { matrix[it].clone() } else matrix
+    constructor(rows: Int, cols: Int = rows, elements: IntArray = IntArray(0)) : this(
+        Array(rows) { r -> IntArray(cols) { c -> elements[r * cols + c] } }, false
     )
     companion object {
         private val ZERO = mutableMapOf<Pair<Int, Int>, Matrix>()
         private val ONE = mutableMapOf<Int, Matrix>()
         fun zero(rows: Int, cols: Int) = ZERO.computeIfAbsent(rows to cols) { (rows, cols) -> Matrix(rows, cols) }
-        fun one(rows: Int) = ONE.computeIfAbsent(rows) { cols ->
-            Matrix(cols, cols, IntArray(cols * cols) { if (it / cols == it % cols) 1 else 0 })
+        fun one(rows: Int) = ONE.computeIfAbsent(rows) {
+            Matrix(Array(rows) { r -> IntArray(rows) { c -> if (r == c) 1 else 0 } }, false)
         }
     }
-    class IntArrayView(private val base: Int, private val matrix: Matrix) : Iterable<Int> {
-        val size = matrix.cols
-        operator fun get(idx: Int) = matrix.elements[base + idx]
-        override fun iterator() = object : Iterator<Int> {
-            private var idx = 0
-            override fun hasNext() = idx < size
-            override fun next() = get(idx)
-        }
-    }
-    operator fun get(idx: Int) = IntArrayView(idx * cols, this)
-    operator fun plus(other: Matrix): Matrix {
-        return Matrix(rows, cols, IntArray(rows * cols) {
-            if (MOD.globalMod > 0) elements[it] ma other.elements[it]
-            else elements[it] + other.elements[it]
-        })
-    }
+    operator fun get(idx: Int) = elements[idx]
+    operator fun plus(other: Matrix) = Matrix(Array(rows) {
+        r -> IntArray(cols) { c -> elements[r][c] + other.elements[r][c] }
+    }, false)
     operator fun times(other: Matrix): Matrix {
-        val ans = IntArray(rows * other.cols)
+        val ans = Array(rows) { IntArray(other.cols) }
         if (MOD.globalMod > 0) {
-            var (otherIRow, thisIRow) = 0 to 0
-            for (i in 0 until rows) {
-                var otherKRow = 0
-                for (k in 0 until cols) {
-                    val thisCell = elements[thisIRow + k].toLong()
-                    if (thisCell != 0L) {
-                        for (j in 0 until other.cols) {
-                            ans[otherIRow + j] += (thisCell * other.elements[otherKRow + j] % MOD.globalMod).toInt()
-                            if (ans[otherIRow + j] >= MOD.globalMod) ans[otherIRow + j] -= MOD.globalMod
-                        }
-                    }
-                    otherKRow += other.cols
+            for (i in 0 until rows) for (k in 0 until cols) {
+                val thisCell = elements[i][k].toLong()
+                if (thisCell == 0L) continue
+                for (j in 0 until other.cols) {
+                    ans[i][j] += (thisCell * other.elements[k][j] % MOD.globalMod).toInt()
+                    if (ans[i][j] >= MOD.globalMod) ans[i][j] -= MOD.globalMod
                 }
-                otherIRow += other.cols; thisIRow += cols
             }
         } else {
             for (i in 0 until rows) for (k in 0 until cols) {
-                if (elements[i * cols + k] == 0) continue
+                if (elements[i][k] == 0) continue
                 for (j in 0 until other.cols) {
-                    ans[i * other.cols + j] += elements[i * cols + k] * other.elements[k * other.cols + j]
+                    ans[i][j] += elements[i][k] * other.elements[k][j]
                 }
             }
         }
-        return Matrix(rows, other.cols, ans)
+        return Matrix(ans, false)
     }
     fun pow(exp: Int) = pow(exp.toLong())
     fun pow(exp: Long): Matrix {
@@ -77,20 +57,13 @@ class Matrix(val rows: Int, val cols: Int = rows, elements: IntArray = IntArray(
         }
         return ans
     }
-    public override fun clone() = Matrix(rows, cols, elements)
-    override fun iterator() = object : Iterator<Iterable<Int>> {
-        private var row = 0
-        override fun hasNext() = row < rows
-        override fun next() = object : Iterable<Int> {
-            private val base = row * cols
-            override fun iterator() = object : Iterator<Int> {
-                private var col = 0
-                override fun hasNext() = col < cols
-                override fun next() = elements[base + col++]
-            }
-        }.also { row++ }
+    public override fun clone() = Matrix(elements)
+    override fun iterator() = object : Iterator<IntArray> {
+        private var row = -1
+        override fun hasNext() = row + 1 < rows
+        override fun next() = elements[++row]
     }
-    fun toTypedArray() = toList().map { it.toList().toIntArray() }.toTypedArray()
+    fun toTypedArray() = Array(rows) { elements[it].clone() }
     override fun toString(): String {
         return buildString {
             for (i in 0 until rows) {
