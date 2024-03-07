@@ -143,55 +143,48 @@ fun lcm(a: Int, b: Int): Int = (a.toLong() / gcd(a, b) * b).toInt()
 
 fun lcm(a: Long, b: Long): Long = a / gcd(a, b) * b
 
+/**
+ * calc ax + by = gcd(a, b)
+ * x = x0 + k * (b/gcd(a,b)); y = y0 - k * (a/gcd(a,b))
+ * calc ax + by = o * gcd(a, b) -> calc a * o * x' + b * o * y' = o * gcd(a, b)
+ * x = x0 * o + k * (b/gcd(a,b)); y = y0 * o - k * (a/gcd(a,b))
+ */
 fun exgcd(a: Int, b: Int): IntArray {
-    // calc ax + by = gcd(a, b)
-    // x = x0 + k * (b/gcd(a,b)); y = y0 - k * (a/gcd(a,b))
-    // calc ax + by = o * gcd(a, b) -> calc a * o * x' + b * o * y' = o * gcd(a, b)
-    // x = x0 * o + k * (b/gcd(a,b)); y = y0 * o - k * (a/gcd(a,b))
-    if (b == 0) {
-        // gcd, x, y
-        return intArrayOf(a, 1, 0)
-    }
+    // gcd, x, y
+    if (b == 0) return intArrayOf(a, 1, 0)
     // x = y0; y = x0 - (a / b) * y0;
     val (gcd, x0, y0) = exgcd(b, a % b)
-    val y = x0 - a / b * y0
-    return intArrayOf(gcd, y0, y)
+    return intArrayOf(gcd, y0, x0 - a / b * y0)
 }
 
+/**
+ * calc ax + by = gcd(a, b)
+ * x = x0 + k * (b/gcd(a,b)); y = y0 - k * (a/gcd(a,b))
+ * calc ax + by = o * gcd(a, b) -> calc a * o * x' + b * o * y' = o * gcd(a, b)
+ * x = x0 * o + k * (b/gcd(a,b)); y = y0 * o - k * (a/gcd(a,b))
+ */
 fun exgcd(a: Long, b: Long): LongArray {
-    // calc ax + by = gcd(a, b)
-    // x = x0 + k * (b/gcd(a,b)); y = y0 - k * (a/gcd(a,b))
-    // calc ax + by = o * gcd(a, b) -> calc a * o * x' + b * o * y' = o * gcd(a, b)
-    // x = x0 * o + k * (b/gcd(a,b)); y = y0 * o - k * (a/gcd(a,b))
-    if (b == 0L) {
-        // gcd, x, y
-        return longArrayOf(a, 1, 0)
-    }
+    // gcd, x, y
+    if (b == 0L) return longArrayOf(a, 1, 0)
     // x = y0; y = x0 - (a / b) * y0;
     val (gcd, x0, y0) = exgcd(b, a % b)
-    val y = x0 - a / b * y0
-    return longArrayOf(gcd, y0, y)
+    return longArrayOf(gcd, y0, x0 - a / b * y0)
 }
 
 fun inv(a: Int, p: Int): Int {
     val (gcd, inv, _) = exgcd(a, p)
-    if (gcd != 1) return -1
-    return (inv + p) % p
+    return if (gcd != 1) -1 else (inv + p) % p
 }
 
 fun inv(a: Long, p: Long): Long {
     val (gcd, inv, _) = exgcd(a, p)
-    if (gcd != 1L) return -1
-    return (inv + p) % p
+    return if (gcd != 1L) -1 else (inv + p) % p
 }
 
 fun inv(a: Int, p: Int, invPModA: Int) = inv(a.toLong(), p.toLong(), invPModA.toLong()).toInt()
 fun inv(a: Long, p: Long, invPModA: Long): Long {
-    var ans = -p / a * invPModA % p
-    if (ans < 0) {
-        ans += p
-    }
-    return ans
+    val ans = -p / a * invPModA % p
+    return if (ans < 0) ans + p else ans
 }
 
 @Suppress("UNCHECKED_CAST")

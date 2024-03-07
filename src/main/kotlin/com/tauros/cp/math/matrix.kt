@@ -12,15 +12,11 @@ class Matrix(matrix: Array<IntArray>, clone: Boolean = true) : Iterable<IntArray
     val cols: Int = matrix[0].size;
     val elements = if (clone) Array(rows) { matrix[it].clone() } else matrix
     constructor(rows: Int, cols: Int = rows, elements: IntArray = IntArray(0)) : this(
-        Array(rows) { r -> IntArray(cols) { c -> elements[r * cols + c] } }, false
+        Array(rows) { r -> IntArray(cols) { c -> if (r * cols + c < elements.size) elements[r * cols + c] else 0 } }, false
     )
     companion object {
-        private val ZERO = mutableMapOf<Pair<Int, Int>, Matrix>()
-        private val ONE = mutableMapOf<Int, Matrix>()
-        fun zero(rows: Int, cols: Int) = ZERO.computeIfAbsent(rows to cols) { (rows, cols) -> Matrix(rows, cols) }
-        fun one(rows: Int) = ONE.computeIfAbsent(rows) {
-            Matrix(Array(rows) { r -> IntArray(rows) { c -> if (r == c) 1 else 0 } }, false)
-        }
+        fun zero(rows: Int, cols: Int) = Matrix(rows, cols)
+        fun one(rows: Int) = Matrix(Array(rows) { r -> IntArray(rows) { c -> if (r == c) 1 else 0 } }, false)
     }
     operator fun get(idx: Int) = elements[idx]
     operator fun plus(other: Matrix) = Matrix(Array(rows) {
@@ -62,21 +58,5 @@ class Matrix(matrix: Array<IntArray>, clone: Boolean = true) : Iterable<IntArray
         private var row = -1
         override fun hasNext() = row + 1 < rows
         override fun next() = elements[++row]
-    }
-    fun toTypedArray() = Array(rows) { elements[it].clone() }
-    override fun toString(): String {
-        return buildString {
-            for (i in 0 until rows) {
-                append('[')
-                append(buildString {
-                    for (j in 0 until cols) {
-                        append(elements[i * cols + j])
-                        append(", ")
-                    }
-                }.trimEnd(' ').trimEnd(','))
-                append(']')
-                append('\n')
-            }
-        }
     }
 }
