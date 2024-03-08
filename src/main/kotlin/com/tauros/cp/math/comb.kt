@@ -12,24 +12,20 @@ open class Comb(val cap: Int, val mod: Int) {
     val fac = IntArray(cap + 1)
     val inv = IntArray(cap + 1)
     val facInv = IntArray(cap + 1)
-
     init {
-        fac[0] = 1
-        facInv[0] = 1
+        fac[0] = 1; facInv[0] = 1
         for (i in 1..cap) {
             inv[i] = if (i == 1) 1 else inv(i, mod, inv[mod % i])
             fac[i] = (fac[i - 1].toLong() * i % mod).toInt()
             facInv[i] = (facInv[i - 1].toLong() * inv[i] % mod).toInt()
         }
     }
-
     fun c(n: Int, m: Int): Int {
         return if (n == m) 1 else if (n !in 0..cap || m !in 0..n) 0 else {
             // C(n, m) = n! / m! / (n - m)!
             (fac[n].toLong() * facInv[m] % mod * facInv[n - m] % mod).toInt()
         }
     }
-
     fun a(n: Int, m: Int): Int {
         return if (n !in 0..cap || m !in 0..n) 0 else {
             // A(n, m) = n! / (n - m)!
@@ -40,6 +36,9 @@ open class Comb(val cap: Int, val mod: Int) {
 
 class ModComb(val cap: Int) {
     private val comb = Comb(cap, MOD.globalMod)
+    val fac = comb.fac
+    val inv = comb.inv
+    val facInv = comb.facInv
     fun c(n: Int, m: Int) = comb.c(n, m).toMInt()
     fun a(n: Int, m: Int) = comb.a(n, m).toMInt()
 }

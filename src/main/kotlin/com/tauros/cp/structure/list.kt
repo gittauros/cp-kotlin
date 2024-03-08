@@ -11,7 +11,6 @@ class IntList(private var cap: Int = MIN_CAP) : MutableList<Int> {
     }
     var array: IntArray = IntArray(cap)
     var idx = 0
-
     private fun newCapacity(old: Int) = minOf(MAX_CAP, maxOf(MIN_CAP, old + (old shr 1)))
     private fun ensureCapacity(new: Int) {
         while (cap < new) {
@@ -22,7 +21,6 @@ class IntList(private var cap: Int = MIN_CAP) : MutableList<Int> {
     }
     override val size: Int
         get() = idx
-
     override fun contains(element: Int) = (0 until idx).any { array[it] == element }
     override fun containsAll(elements: Collection<Int>) = elements.all { it in this }
     override fun indexOf(element: Int) = (0 until idx).firstOrNull { array[it] == element } ?: -1
@@ -42,52 +40,47 @@ class IntList(private var cap: Int = MIN_CAP) : MutableList<Int> {
         array[idx++] = element
         return true
     }
-
     override fun add(index: Int, element: Int) {
-        TODO("Not yet implemented")
+        ensureCapacity(idx + 1)
+        System.arraycopy(array, index, array, index + 1, idx - index)
+        array[index] = element
+        idx += 1
     }
-
     override fun addAll(index: Int, elements: Collection<Int>): Boolean {
-        TODO("Not yet implemented")
+        ensureCapacity(idx + elements.size)
+        System.arraycopy(array, index, array, index + elements.size, idx - index)
+        var pos = index; for (element in elements) array[pos++] = element
+        idx += elements.size
+        return true
     }
-
     override fun addAll(elements: Collection<Int>): Boolean {
         elements.forEach { add(it) }
         return true
     }
-
     override fun clear() {
         idx = 0
     }
-
     override fun listIterator(): MutableListIterator<Int> {
         TODO("Not yet implemented")
     }
-
     override fun listIterator(index: Int): MutableListIterator<Int> {
         TODO("Not yet implemented")
     }
-
     override fun remove(element: Int): Boolean {
         TODO("Not yet implemented")
     }
-
     override fun removeAll(elements: Collection<Int>): Boolean {
         TODO("Not yet implemented")
     }
-
     override fun removeAt(index: Int): Int {
         TODO("Not yet implemented")
     }
-
     override fun retainAll(elements: Collection<Int>): Boolean {
         TODO("Not yet implemented")
     }
-
     private fun checkIndex(index: Int) {
         if (index < 0 || index >= idx) throw IndexOutOfBoundsException(index.toString())
     }
-
     override fun get(index: Int): Int {
         checkIndex(index)
         return array[index]
@@ -98,7 +91,6 @@ class IntList(private var cap: Int = MIN_CAP) : MutableList<Int> {
         array[index] = element
         return old
     }
-
     override fun subList(fromIndex: Int, toIndex: Int) = array.copyOfRange(fromIndex, toIndex).toIntList()
     fun toIntArray() = array.copyOfRange(0, idx)
     fun sort() = array.sort(0, idx)
