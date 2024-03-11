@@ -1,12 +1,14 @@
 package com.tauros.cp.common
 
 import com.tauros.cp.structure.maxHeapDown
+import kotlin.math.sqrt
 
 
 /**
  * @author tauros
  * 2023/8/22
  */
+// 归并排序
 inline fun IntArray.mergeSort(fromIndex: Int = 0, toIndex: Int = size, temp: IntArray = IntArray(toIndex - fromIndex), comparator: (Int, Int) -> Int) {
     val (base, len) = fromIndex to toIndex - fromIndex
     var (range, half) = 2 to 1
@@ -45,6 +47,7 @@ inline fun LongArray.mergeSort(fromIndex: Int = 0, toIndex: Int = size, temp: Lo
     }
 }
 
+// 堆排序
 inline fun IntArray.heapSort(from: Int, to: Int = size, comparator: (Int, Int) -> Int = Int::compareTo) {
     val len = to - from
     if (len <= 1) return
@@ -69,6 +72,7 @@ inline fun IntArray.heapSort(to: Int = size, comparator: (Int, Int) -> Int = Int
     }
 }
 
+// 二分
 inline fun findFirst(l: Int, r: Int, judge: (Int) -> Boolean) = findFirst(r - l) { judge(it + l) } + l
 inline fun findFirst(n: Int, judge: (Int) -> Boolean): Int {
     var l = 0
@@ -93,6 +97,31 @@ inline fun findFirst(n: Long, judge: (Long) -> Boolean): Long {
     return l
 }
 
+// 三分
+inline fun <T> ternarySearch(l: Double, r: Double, chooseLeft: (left: Pair<Double, T>, right: Pair<Double, T>) -> Boolean, calc: (Double) -> T) = ternarySearch(40, l, r, chooseLeft, calc)
+inline fun <T> ternarySearch(reps: Int, l: Double, r: Double, chooseLeft: (left: Pair<Double, T>, right: Pair<Double, T>) -> Boolean, calc: (Double) -> T): Pair<Double, T> {
+    val ratio = (sqrt(5.0) + 1.0) / 2
+    var (st, ed) = l to r
+    var cur = (ed + ratio * st) / (ratio + 1); var res = calc(cur)
+    repeat(reps) {
+        val (low, high) =
+            if (cur - st < ed - cur) {
+                val next = (ed * ratio + st) / (ratio + 1); val judge = calc(next)
+                (cur to res) to (next to judge)
+            } else {
+                val next = (ed + ratio * st) / (ratio + 1); val judge = calc(next)
+                (next to judge) to (cur to res)
+            }
+        if (chooseLeft(low, high)) {
+            cur = low.first; res = low.second; ed = high.first
+        } else {
+            cur = high.first; res = high.second; st = low.first
+        }
+    }
+    return cur to res
+}
+
+// 开根号
 fun sqrt(n: Int) = sqrt(n.toLong()).toInt()
 fun sqrt(n: Long): Long {
     if (n == 0L) return 0
@@ -185,6 +214,7 @@ fun pow(a: Long, p: Long, mod: Int): Int {
     return res.toInt()
 }
 
+// 最大公约数与最小公倍数
 tailrec fun gcd(a: Int, b: Int): Int =
     if (b == 0) a else gcd(b, a % b)
 
@@ -223,6 +253,7 @@ fun exgcd(a: Long, b: Long): LongArray {
     return longArrayOf(gcd, y0, x0 - a / b * y0)
 }
 
+// 逆元
 fun inv(a: Int, p: Int): Int {
     val (gcd, inv, _) = exgcd(a, p)
     return if (gcd != 1) -1 else (inv + p) % p
@@ -239,6 +270,7 @@ fun inv(a: Long, p: Long, invPModA: Long): Long {
     return if (ans < 0) ans + p else ans
 }
 
+// 工具方法
 @Suppress("UNCHECKED_CAST")
 operator fun <T : Number> T.plus(other: T): T {
     return when (this) {
