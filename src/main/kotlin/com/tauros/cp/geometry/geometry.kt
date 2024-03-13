@@ -13,13 +13,9 @@ data class IPoint2(val x: Int, val y: Int) {
     operator fun minus(other: IVector2) = IPoint2(x - other.x, y - other.y)
     operator fun minus(other: IPoint2) = IVector2(x - other.x, y - other.y)
     override fun equals(other: Any?): Boolean {
-        return if (other === this) {
-            true
-        } else if (other !is IPoint2) {
-            false
-        } else {
-            x == other.x && y == other.y
-        }
+        return if (other === this) true
+        else if (other !is IPoint2) false
+        else x == other.x && y == other.y
     }
     override fun hashCode() = x.hashCode() xor y.hashCode()
 }
@@ -37,13 +33,9 @@ data class IVector2(val x: Int, val y: Int) {
     infix fun isPerpendicular(other: IVector2) = (this dot other) == 0L
     infix fun side(other: IVector2) = (this cross other).let { if (it < 0) -1 else if (it > 0) 1 else 0 }
     override fun equals(other: Any?): Boolean {
-        return if (other === this) {
-            true
-        } else if (other !is IVector2) {
-            false
-        } else {
-            x == other.x && y == other.y
-        }
+        return if (other === this) true
+        else if (other !is IVector2) false
+        else x == other.x && y == other.y
     }
     override fun hashCode() = x.hashCode() xor y.hashCode()
 }
@@ -55,13 +47,9 @@ data class LPoint2(val x: Long, val y: Long) {
     operator fun minus(other: LVector2) = LPoint2(x - other.x, y - other.y)
     operator fun minus(other: LPoint2) = LVector2(x - other.x, y - other.y)
     override fun equals(other: Any?): Boolean {
-        return if (other === this) {
-            true
-        } else if (other !is LPoint2) {
-            false
-        } else {
-            x == other.x && y == other.y
-        }
+        return if (other === this) true
+        else if (other !is LPoint2) false
+        else x == other.x && y == other.y
     }
     override fun hashCode() = x.hashCode() xor y.hashCode()
 }
@@ -81,13 +69,9 @@ data class LVector2(val x: Long, val y: Long) {
     infix fun isPerpendicular(other: LVector2) = (this dot other) == 0L
     infix fun side(other: LVector2) = (this cross other).let { if (it < 0) -1 else if (it > 0) 1 else 0 }
     override fun equals(other: Any?): Boolean {
-        return if (other === this) {
-            true
-        } else if (other !is LVector2) {
-            false
-        } else {
-            x == other.x && y == other.y
-        }
+        return if (other === this) true
+        else if (other !is LVector2) false
+        else x == other.x && y == other.y
     }
     override fun hashCode() = x.hashCode() xor y.hashCode()
 }

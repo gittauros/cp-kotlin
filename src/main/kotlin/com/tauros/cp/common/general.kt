@@ -98,7 +98,7 @@ inline fun findFirst(n: Long, judge: (Long) -> Boolean): Long {
 }
 
 // 三分
-inline fun <T> ternarySearch(l: Double, r: Double, chooseLeft: (left: Pair<Double, T>, right: Pair<Double, T>) -> Boolean, calc: (Double) -> T) = ternarySearch(40, l, r, chooseLeft, calc)
+inline fun <T> ternarySearch(l: Double, r: Double, chooseLeft: (left: Pair<Double, T>, right: Pair<Double, T>) -> Boolean, calc: (Double) -> T) = ternarySearch(50, l, r, chooseLeft, calc)
 inline fun <T> ternarySearch(reps: Int, l: Double, r: Double, chooseLeft: (left: Pair<Double, T>, right: Pair<Double, T>) -> Boolean, calc: (Double) -> T): Pair<Double, T> {
     val ratio = (sqrt(5.0) + 1.0) / 2
     var (st, ed) = l to r
