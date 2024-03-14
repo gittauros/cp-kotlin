@@ -16,7 +16,7 @@ open class Graph(val nodeCap: Int, var edgeCap: Int = maxOf(nodeCap, MIN_EDGE_CO
     var removed = 0
     val totalEdgeCnt: Int get() = idx + 1 - removed
     val first = IntArray(nodeCap) { -1 }
-    val vtxEdgeCnt = IntArray(if (removeAble) nodeCap else 0)
+    val vtxEdgeCnt = IntArray(nodeCap)
     var to = IntArray(edgeCap)
     var next = IntArray(edgeCap)
     var from = IntArray(if (needFrom) edgeCap else 0)
@@ -49,9 +49,7 @@ open class Graph(val nodeCap: Int, var edgeCap: Int = maxOf(nodeCap, MIN_EDGE_CO
         this.to[edgeId] = to
         this.next[edgeId] = this.first[from]
         this.first[from] = edgeId
-        if (removeAble) {
-            this.vtxEdgeCnt[from] += 1
-        }
+        this.vtxEdgeCnt[from] += 1
         return edgeId
     }
 
@@ -92,13 +90,14 @@ open class Graph(val nodeCap: Int, var edgeCap: Int = maxOf(nodeCap, MIN_EDGE_CO
     fun clear(u: Int) {
         if (removeAble) {
             removed += vtxEdgeCnt[u]
+            vtxEdgeCnt[u] = 0
             first[u] = -1
         }
     }
 }
 
-class IGraph(nodeCap: Int, edgeCap: Int = maxOf(nodeCap, MIN_EDGE_COUNT) * 2, needFrom: Boolean = false)
-    : Graph(nodeCap, edgeCap, needFrom) {
+class IGraph(nodeCap: Int, edgeCap: Int = maxOf(nodeCap, MIN_EDGE_COUNT) * 2, needFrom: Boolean = false, removeAble: Boolean = false)
+    : Graph(nodeCap, edgeCap, needFrom, removeAble) {
     var weight = IntArray(edgeCap)
 
     override fun expand(increment: Int) {
@@ -113,8 +112,8 @@ class IGraph(nodeCap: Int, edgeCap: Int = maxOf(nodeCap, MIN_EDGE_COUNT) * 2, ne
     }
 }
 
-class LGraph(nodeCap: Int, edgeCap: Int = maxOf(nodeCap, MIN_EDGE_COUNT) * 2, needFrom: Boolean = false)
-    : Graph(nodeCap, edgeCap, needFrom) {
+class LGraph(nodeCap: Int, edgeCap: Int = maxOf(nodeCap, MIN_EDGE_COUNT) * 2, needFrom: Boolean = false, removeAble: Boolean = false)
+    : Graph(nodeCap, edgeCap, needFrom, removeAble) {
     var weight = LongArray(edgeCap)
 
     override fun expand(increment: Int) {
