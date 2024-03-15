@@ -18,6 +18,7 @@ data class IPoint2(val x: Int, val y: Int) {
         else x == other.x && y == other.y
     }
     override fun hashCode() = x.hashCode() xor y.hashCode()
+    override fun toString() = "($x,$y)"
 }
 
 data class IVector2(val x: Int, val y: Int) {
@@ -38,6 +39,7 @@ data class IVector2(val x: Int, val y: Int) {
         else x == other.x && y == other.y
     }
     override fun hashCode() = x.hashCode() xor y.hashCode()
+    override fun toString() = "($x,$y)"
 }
 
 // long
