@@ -40,8 +40,7 @@ fun CharArray.zfunc(): IntArray {
         else {
             if (i <= r) z[i] = r - i + 1
             while (i + z[i] < this.size && this[i + z[i]] == this[z[i]]) z[i]++
-            l = i
-            r = i + z[i] - 1
+            l = i; r = i + z[i] - 1
         }
     }
     // 每个位置和前缀的lcp
