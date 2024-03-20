@@ -1,7 +1,18 @@
+import com.tauros.cp.common.pow
 
+class Solution {
+    fun minNonZeroProduct(p: Int): Int {
+        val mod = 1e9.toInt() + 7
+        val cap = (1L shl p) - 1
+        val res = pow((cap - 1) % mod, (cap - 1) / 2, mod)
+        val ans = cap % mod * res % mod
+        return ans.toInt()
+    }
+}
 
 fun main(args: Array<String>) {
     val starTime = System.currentTimeMillis()
+    Solution().minNonZeroProduct(35)
     println("duration: ${System.currentTimeMillis() - starTime} ms")
 }
 

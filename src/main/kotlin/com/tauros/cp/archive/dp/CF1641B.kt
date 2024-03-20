@@ -1,4 +1,4 @@
-package com.tauros.cp.archive.pain
+package com.tauros.cp.archive.dp
 
 import com.tauros.cp.FastReader
 import com.tauros.cp.FastWriter

@@ -1,8 +1,5 @@
 package com.tauros.cp.math
 
-import com.tauros.cp.structure.IntList
-import com.tauros.cp.structure.toIntList
-
 
 /**
  * @author tauros
@@ -35,11 +32,11 @@ class Prime(val max: Int) : Iterable<Int> {
         primes = primeList.toIntArray()
     }
 
-    fun factors(num: Int, sorted: Boolean = false): IntList {
+    fun factors(num: Int, sorted: Boolean = false): List<Int> {
         // 素因子分解求num的所有约数
-        if (num > max) return IntList()
-        if (num == 1) return intArrayOf(1).toIntList()
-        if (num in this) return intArrayOf(1, num).toIntList()
+        if (num > max) return emptyList()
+        if (num == 1) return listOf(1)
+        if (num in this) return listOf(1, num)
         val pFacts = buildList {
             var iter = num
             while (iter > 1) {
@@ -52,10 +49,11 @@ class Prime(val max: Int) : Iterable<Int> {
                 add(p to cnt)
             }
         }
-        val res = IntList()
-        res.add(1)
-        for ((p, cnt) in pFacts) repeat(cnt * res.size) { res.add(res[it] * p) }
-        if (sorted) res.sort()
+        val res = buildList<Int> {
+            add(1)
+            for ((p, cnt) in pFacts) repeat(cnt * size) { add(this[it] * p) }
+            if (sorted) this.sort()
+        }
         return res
     }
 

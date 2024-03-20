@@ -205,7 +205,7 @@ fun pow(a: Long, p: Long): Long {
 fun pow(a: Int, p: Long, mod: Int) = pow(a.toLong(), p, mod)
 fun pow(a: Long, p: Long, mod: Int): Int {
     var res = 1L
-    var base = a
+    var base = a % mod
     var rest = p
     while (rest > 0) {
         if (rest and 1L == 1L) res = res * base % mod
