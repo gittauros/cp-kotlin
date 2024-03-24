@@ -1,6 +1,7 @@
 package com.tauros.cp.structure
 
 
+
 /**
  * @author tauros
  */
@@ -18,11 +19,11 @@ interface SegmentOpArray<D> {
     operator fun get(pos: Int): D
 }
 fun ceilingLog(num: Int) = num.takeHighestOneBit().let { if (it == num) it else it shl 1 }.countTrailingZeroBits()
-class LazySegmentTree<S, F>(val n: Int, init: ((Int) -> S)? = null,
-                            private val op: (S, S) -> S, private val e: () -> S, private val mapping: S.(tag: F) -> S,
+class FuncLazySegmentTree<S, F>(val n: Int, init: ((Int) -> S)? = null,
+                                private val op: (S, S) -> S, private val e: () -> S, private val mapping: S.(tag: F) -> S,
                             // f是标记，合并后相当于先用this，再用传入的
-                            private val composition: F.(F) -> F, private val id: () -> F,
-                            private val data: SegmentOpArray<S>, private val lazy: SegmentOpArray<F>) {
+                                private val composition: F.(F) -> F, private val id: () -> F,
+                                private val data: SegmentOpArray<S>, private val lazy: SegmentOpArray<F>) {
     private val log = ceilingLog(n)
     private val size = 1 shl log
     init {
@@ -96,68 +97,65 @@ class LazySegmentTree<S, F>(val n: Int, init: ((Int) -> S)? = null,
     }
 }
 
-fun <S, F> lazySeg(
+fun <S, F> funcLazySeg(
     n: Int, init: (Int) -> S, op: (S, S) -> S, e: () -> S,
     mapping: S.(tag: F) -> S, composition: F.(F) -> F, id: () -> F,
     newDataArray: (Int) -> SegmentOpArray<S>, newLazyArray: (Int) -> SegmentOpArray<F>
-): LazySegmentTree<S, F> {
+): FuncLazySegmentTree<S, F> {
     val size = 1 shl ceilingLog(n)
     val dataArray = newDataArray(size shl 1)
     val lazyArray = newLazyArray(size)
-    return LazySegmentTree(n, init, op, e, mapping, composition, id, dataArray, lazyArray)
+    return FuncLazySegmentTree(n, init, op, e, mapping, composition, id, dataArray, lazyArray)
 }
 
 // 自己的版本，比上面的时间快些，内存大些
 // 使用时是闭区间
-interface SegmentTag<T : SegmentTag<T>> {
-    fun accept(other: T)
-    fun available(): Boolean
-    fun clear()
+interface LazySegmentData<D : LazySegmentData<D, T>, T> {
+    var tag: T
+    fun tagAvailable(): Boolean
+    fun clearTag()
+    fun acceptTag(other: T)
+    fun update(l: D, r: D)
 }
-interface SegmentData<D : SegmentData<D, T>, T : SegmentTag<T>> {
-    fun accept(tag: T)
-    fun calc(l: D, r: D)
+data class LazySegmentTreeNode<D>(val cl: Int, val cr: Int, val info: D, val mid: Int = cl + cr shr 1) {
+    var l: LazySegmentTreeNode<D>? = null
+    var r: LazySegmentTreeNode<D>? = null
 }
-class SegmentTree<D : SegmentData<D, T>, T : SegmentTag<T>>(
-    start: Int, end: Int, private val defaultData: () -> D, private val defaultTag: () -> T) {
-    data class SegmentNode<D, T>(val cl: Int, val cr: Int, val info: D, val tag: T?) {
-        val mid: Int
-            get() = cl + cr shr 1
-        var l: SegmentNode<D, T>? = null
-        var r: SegmentNode<D, T>? = null
-    }
-    private fun SegmentNode<D, T>.build(init: D.(Int) -> Unit) {
+class LazySegmentTree<D : LazySegmentData<D, T>, T>(start: Int, end: Int, val defaultData: () -> D) {
+    val q = ArrayDeque<LazySegmentTreeNode<D>>()
+    private fun LazySegmentTreeNode<D>.build(init: D.(Int) -> Unit) {
         if (cl == cr) { info.init(cl); return }
-        l = SegmentNode(cl, mid, defaultData(), if (cl == mid) null else defaultTag())
-        r = SegmentNode(mid + 1, cr, defaultData(), if (mid + 1 == cr) null else defaultTag())
-        l?.build(init); r?.build(init)
+        l = LazySegmentTreeNode(cl, mid, defaultData())
+        r = LazySegmentTreeNode(mid + 1, cr, defaultData())
+        l!!.build(init); r!!.build(init)
         pushUp()
     }
-    private fun SegmentNode<D, T>.pushDown() {
+    private fun LazySegmentTreeNode<D>.pushDown() {
         if (cl == cr) return
-        if (l == null) l = SegmentNode(cl, mid, defaultData(), if (cl == mid) null else defaultTag())
-        if (r == null) r = SegmentNode(mid + 1, cr, defaultData(), if (mid + 1 == cr) null else defaultTag())
-        if (tag != null && tag.available()) {
-            l?.tag?.accept(tag); l?.info?.accept(tag)
-            r?.tag?.accept(tag); r?.info?.accept(tag)
-            tag.clear()
+        if (l == null) l = LazySegmentTreeNode(cl, mid, defaultData())
+        if (r == null) r = LazySegmentTreeNode(mid + 1, cr, defaultData())
+        if (info.tagAvailable()) {
+            l!!.info.acceptTag(info.tag)
+            r!!.info.acceptTag(info.tag)
+            info.clearTag()
         }
     }
-    private fun SegmentNode<D, T>.pushUp() { info.calc(l!!.info, r!!.info) }
-    private fun SegmentNode<D, T>.update(st: Int, ed: Int, upd: T) {
-        if (cl > ed || cr < st) return
-        if (cl >= st && cr <= ed) { tag?.accept(upd); info.accept(upd); return }
+    fun LazySegmentTreeNode<D>.pushUp() { info.update(l!!.info, r!!.info) }
+    private fun LazySegmentTreeNode<D>.update(st: Int, ed: Int, upd: T) {
+        if (cl >= st && cr <= ed) { info.acceptTag(upd); return }
         pushDown()
-        l?.update(st, ed, upd); r?.update(st, ed, upd)
+        if (st <= mid) l!!.update(st, ed, upd)
+        if (ed > mid) r!!.update(st, ed, upd)
         pushUp()
     }
-    private fun <R> SegmentNode<D, T>.query(st: Int, ed: Int, query: D.() -> R, merge: (R?, R?) -> R): R? {
-        if (cl > ed || cr < st) return null
+    private fun <R> LazySegmentTreeNode<D>.query(st: Int, ed: Int, query: D.() -> R, merge: (R, R) -> R): R {
         if (cl >= st && cr <= ed) return info.query()
         pushDown()
-        return merge(l?.query(st, ed, query, merge), r?.query(st, ed, query, merge))
+        if (ed <= mid) return l!!.query(st, ed, query, merge)
+        if (st > mid) return r!!.query(st, ed, query, merge)
+        return merge(l!!.query(st, ed, query, merge), r!!.query(st, ed, query, merge))
     }
-    val seg = SegmentNode(start, end, defaultData(), defaultTag())
+    var seg = LazySegmentTreeNode(start, end, defaultData())
     fun build(init: D.(Int) -> Unit) = seg.build(init)
     fun update(st: Int, ed: Int, upd: T) = seg.update(st, ed, upd)
     fun <R> query(st: Int, ed: Int, query: D.() -> R, merge: (R?, R?) -> R) = seg.query(st, ed, query, merge)!!

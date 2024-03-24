@@ -3,14 +3,13 @@ package com.tauros.cp.archive.ds
 import com.tauros.cp.FastReader
 import com.tauros.cp.FastWriter
 import com.tauros.cp.ar
-import com.tauros.cp.bar
 import com.tauros.cp.car
 import com.tauros.cp.common.boolean
 import com.tauros.cp.common.int
 import com.tauros.cp.iao
 import com.tauros.cp.randomInt
-import com.tauros.cp.structure.SegmentOpArray
-import com.tauros.cp.structure.lazySeg
+import com.tauros.cp.structure.LazySegmentData
+import com.tauros.cp.structure.LazySegmentTree
 import kotlin.math.abs
 import kotlin.system.measureTimeMillis
 
@@ -23,6 +22,7 @@ private val rd = FastReader(System.`in`, bufCap)
 private val wt = FastWriter(System.out, bufCap)
 
 private fun solve() {
+    // https://codeforces.com/problemset/problem/145/E
 //    val (n, m) = rd.ni() to rd.ni()
 //    val str = rd.ns(n)
 
@@ -34,44 +34,50 @@ private fun solve() {
         iao(minOf(a, b), maxOf(a, b))
     }
 
-    data class Info(val c00: int = 0, val c11: int = 0, val c01: int = 0, val c10: int = 0)
-    fun op(l: Info, r: Info) = Info(
-        l.c00 + r.c00, l.c11 + r.c11,
-        maxOf(l.c00 + r.c01, l.c01 + r.c11),
-        maxOf(l.c11 + r.c10, l.c10 + r.c00)
-    )
-    fun Info.mapping(tag: boolean) = if (tag) Info(c11, c00, c10, c01) else this
-    fun boolean.composition(tag: boolean) = this xor tag
-    val seg = lazySeg(n, {
-        Info(if (str[it] == '4') 1 else 0, if (str[it] == '4') 0 else 1, 1, 1)
-    }, ::op, { Info() }, Info::mapping, boolean::composition, { false },
-        {
-            object : SegmentOpArray<Info> {
-                val array = ar(it) { Info() }
-                override fun set(pos: Int, data: Info) { array[pos] = data }
-                override fun get(pos: Int) = array[pos]
-            }
-        }, {
-            object : SegmentOpArray<boolean> {
-                val array = bar(it)
-                override fun set(pos: Int, data: boolean) { array[pos] = data }
-                override fun get(pos: Int) = array[pos]
-            }
-        })
+    data class Info(var c00: int = 0, var c11: int = 0, var c01: int = 0, var c10: int = 0) : LazySegmentData<Info, boolean> {
+        override var tag: boolean = false
+        override fun tagAvailable() = tag
+        override fun clearTag() { tag = false }
+        override fun acceptTag(other: boolean) {
+            if (!other) return
+            tag = !tag
+            val t1 = c00; c00 = c11; c11 = t1
+            val t2 = c01; c01 = c10; c10 = t2
+        }
+        override fun update(l: Info, r: Info) {
+            c00 = l.c00 + r.c00; c11 = l.c11 + r.c11
+            c01 = maxOf(l.c00 + r.c01, l.c01 + r.c11)
+            c10 = maxOf(l.c11 + r.c10, l.c10 + r.c00)
+        }
+    }
+    val seg = LazySegmentTree(0, n - 1) { Info() }
     println(buildString {
         val time = measureTimeMillis {
-            for ((cl, cr) in ops) seg.apply(cl, cr + 1, true)
+            seg.build {
+                if (str[it] == '4') c00 = 1 else c11 = 1
+                c01 = 1; c10 = 1
+            }
+        }
+        append("$time ms")
+    })
+//    seg.build {
+//        if (str[it] == '4') c00 = 1 else c11 = 1
+//        c01 = 1; c10 = 1
+//    }
+    println(buildString {
+        val time = measureTimeMillis {
+            for ((cl, cr) in ops) seg.update(cl, cr, true)
         }
         append("$time ms")
     })
 //    repeat(m) {
 //        val op = rd.ns()
 //        if (op == "count") {
-//            val ans = seg.prod(0, n)
+//            val ans = seg.queryAll { this }
 //            wt.println(ans.c01)
 //        } else {
 //            val (l, r) = rd.ni() - 1 to rd.ni() - 1
-//            seg.apply(l, r + 1, true)
+//            seg.update(l, r, true)
 //        }
 //    }
 }
