@@ -22,6 +22,14 @@ interface LazySegmentNode<D : LazySegmentNode<D, T>, T> {
     fun acceptTag(other: T)
     fun update(l: D, r: D)
 }
+interface LazySegmentNonTagNode<D : LazySegmentNonTagNode<D>> : LazySegmentNode<D, Unit> {
+    override var tag: Unit
+        get() = Unit
+        set(v) {  }
+    override fun tagAvailable() = false
+    override fun clearTag() { }
+    override fun acceptTag(other: Unit) { }
+}
 fun ceilingLog(num: Int) = num.takeHighestOneBit().let { if (it == num) it else it shl 1 }.countTrailingZeroBits()
 class LazySegment<D : LazySegmentNode<D, T>, T>(val n: Int, newArray: (Int) -> Array<D>, init: D.(Int) -> Unit = { }) {
     val log = ceilingLog(n)
@@ -96,16 +104,25 @@ class LazySegment<D : LazySegmentNode<D, T>, T>(val n: Int, newArray: (Int) -> A
     }
 }
 
-typealias SegNode<D, T> = LazySegmentNode<D, T>
+typealias SegTagNode<D, T> = LazySegmentNode<D, T>
+typealias SegNonTagNode<D> = LazySegmentNonTagNode<D>
 typealias Seg<D, T> = LazySegment<D, T>
 
 // 自己的版本，树版本
 // 使用时是闭区间，区间起点终点无要求，支持动态开点
-abstract class LazySegmentTreeNode<D : LazySegmentTreeNode<D, T>, T>(val cl: Int, val cr: Int, val mid: Int = cl + cr shr 1) : LazySegmentNode<D, T> {
+abstract class LazySegmentTreeTagNode<D : LazySegmentTreeTagNode<D, T>, T>(val cl: Int, val cr: Int, val mid: Int = cl + cr shr 1) : LazySegmentNode<D, T> {
     var l: D? = null
     var r: D? = null
 }
-class LazySegmentTree<D : LazySegmentTreeNode<D, T>, T>(start: Int, end: Int, val newNode: (cl: Int, cr: Int) -> D) {
+abstract class LazySegmentTreeNonTagNode<D : LazySegmentTreeNonTagNode<D>>(cl: Int, cr: Int, mid: Int = cl + cr shr 1) : LazySegmentTreeTagNode<D, Unit>(cl, cr, mid) {
+    override var tag: Unit
+        get() = Unit
+        set(v) {  }
+    override fun tagAvailable() = false
+    override fun clearTag() { }
+    override fun acceptTag(other: Unit) { }
+}
+class LazySegmentTree<D : LazySegmentTreeTagNode<D, T>, T>(start: Int, end: Int, val newNode: (cl: Int, cr: Int) -> D) {
     private fun D.build(init: D.(Int) -> Unit) {
         if (cl == cr) { init(cl); return }
         l = newNode(cl, mid)
@@ -145,5 +162,6 @@ class LazySegmentTree<D : LazySegmentTreeNode<D, T>, T>(start: Int, end: Int, va
     fun <R> queryAll(query: D.() -> R) = seg.query()
 }
 
-typealias SegTreeNode<D, T> = LazySegmentTreeNode<D, T>
+typealias SegTreeTagNode<D, T> = LazySegmentTreeTagNode<D, T>
+typealias SegTreeNonTagNode<D> = LazySegmentTreeNonTagNode<D>
 typealias SegTree<D, T> = LazySegmentTree<D, T>

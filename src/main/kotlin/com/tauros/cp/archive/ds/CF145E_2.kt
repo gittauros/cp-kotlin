@@ -5,7 +5,7 @@ import com.tauros.cp.FastWriter
 import com.tauros.cp.common.boolean
 import com.tauros.cp.common.int
 import com.tauros.cp.structure.SegTree
-import com.tauros.cp.structure.SegTreeNode
+import com.tauros.cp.structure.SegTreeTagNode
 
 /**
  * @author tauros
@@ -21,7 +21,7 @@ private fun solve() {
     val (n, m) = rd.ni() to rd.ni()
     val str = rd.ns(n)
 
-    class Info(cl: int, cr: int) : SegTreeNode<Info, boolean>(cl, cr) {
+    class Info(cl: int, cr: int) : SegTreeTagNode<Info, boolean>(cl, cr) {
         var c00: int = 0
         var c11: int = 0
         var c01: int = 0

@@ -6,7 +6,7 @@ import com.tauros.cp.ar
 import com.tauros.cp.common.boolean
 import com.tauros.cp.common.int
 import com.tauros.cp.structure.Seg
-import com.tauros.cp.structure.SegNode
+import com.tauros.cp.structure.SegTagNode
 
 /**
  * @author tauros
@@ -22,7 +22,7 @@ private fun solve() {
     val (n, m) = rd.ni() to rd.ni()
     val str = rd.ns(n)
 
-    data class Info(var c00: int = 0, var c11: int = 0, var c01: int = 0, var c10: int = 0) : SegNode<Info, boolean> {
+    data class Info(var c00: int = 0, var c11: int = 0, var c01: int = 0, var c10: int = 0) : SegTagNode<Info, boolean> {
         override var tag = false
         override fun tagAvailable() = tag
         override fun clearTag() { tag = false }
