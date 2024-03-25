@@ -14,7 +14,7 @@ package com.tauros.cp.structure
 // https://codeforces.com/blog/entry/18051
 // ↑ 线段树循环版，非递归线段树
 
-// 使用时是半闭半开区间，区间端点必须从0开始
+// 使用时是半闭半开区间，区间端点必须从0开始，不支持动态开点
 interface LazySegmentNode<D : LazySegmentNode<D, T>, T> {
     var tag: T
     fun tagAvailable(): Boolean
@@ -100,7 +100,7 @@ typealias SegNode<D, T> = LazySegmentNode<D, T>
 typealias Seg<D, T> = LazySegment<D, T>
 
 // 自己的版本，树版本
-// 使用时是闭区间
+// 使用时是闭区间，区间起点终点无要求，支持动态开点
 abstract class LazySegmentTreeNode<D : LazySegmentTreeNode<D, T>, T>(val cl: Int, val cr: Int, val mid: Int = cl + cr shr 1) : LazySegmentNode<D, T> {
     var l: D? = null
     var r: D? = null
