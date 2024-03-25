@@ -6,7 +6,8 @@ package com.tauros.cp.structure
  * @author tauros
  */
 // https://github.com/atcoder/ac-library/blob/master/document_en/lazysegtree.md
-// ↑ atcoder的模板声明
+// https://github.com/atcoder/ac-library/blob/master/atcoder/lazysegtree.hpp
+// ↑ atcoder的模板
 // https://zhuanlan.zhihu.com/p/459579152
 // https://zhuanlan.zhihu.com/p/459679512
 // ↑ C++实现与中文说明
@@ -14,69 +15,67 @@ package com.tauros.cp.structure
 // ↑ 线段树循环版，非递归线段树
 
 // 使用时是半闭半开区间，区间端点必须从0开始
-interface SegmentOpArray<D> {
-    operator fun set(pos: Int, data: D)
-    operator fun get(pos: Int): D
+interface LazySegmentNode<D : LazySegmentNode<D, T>, T> {
+    var tag: T
+    fun tagAvailable(): Boolean
+    fun clearTag()
+    fun acceptTag(other: T)
+    fun update(l: D, r: D)
 }
 fun ceilingLog(num: Int) = num.takeHighestOneBit().let { if (it == num) it else it shl 1 }.countTrailingZeroBits()
-class FuncLazySegmentTree<S, F>(val n: Int, init: ((Int) -> S)? = null,
-                                private val op: (S, S) -> S, private val e: () -> S, private val mapping: S.(tag: F) -> S,
-                            // f是标记，合并后相当于先用this，再用传入的
-                                private val composition: F.(F) -> F, private val id: () -> F,
-                                private val data: SegmentOpArray<S>, private val lazy: SegmentOpArray<F>) {
-    private val log = ceilingLog(n)
-    private val size = 1 shl log
+class LazySegment<D : LazySegmentNode<D, T>, T>(val n: Int, newArray: (Int) -> Array<D>, init: D.(Int) -> Unit = { }) {
+    val log = ceilingLog(n)
+    val size = 1 shl log
+    val nodes: Array<D>
     init {
-        if (init != null) for (i in 0 until n) data[i + size] = init(i)
+        nodes = newArray(size * 2)
+        for (i in 0 until n) nodes[i + size].init(i)
         for (i in size - 1 downTo 1) pushUp(i)
     }
-    private fun accept(p: Int, f: F) {
-        data[p] = data[p].mapping(f)
-        if (p < size) lazy[p] = lazy[p].composition(f)
-    }
-    private fun pushDown(p: Int) {
-        accept(p shl 1, lazy[p])
-        accept(p shl 1 or 1, lazy[p])
-        lazy[p] = id()
+    fun pushDown(p: Int) {
+        if (nodes[p].tagAvailable()) {
+            nodes[p shl 1].acceptTag(nodes[p].tag)
+            nodes[p shl 1 or 1].acceptTag(nodes[p].tag)
+            nodes[p].clearTag()
+        }
     }
     private fun pushUp(p: Int) {
-        data[p] = op(data[p shl 1], data[p shl 1 or 1])
+        nodes[p].update(nodes[p shl 1], nodes[p shl 1 or 1])
     }
-    operator fun set(pos: Int, x: S) {
+    operator fun set(pos: Int, d: D) {
         val p = pos + size
         for (i in log downTo 1) pushDown(p shr i)
-        data[p] = x
+        nodes[p] = d
         for (i in 1 .. log) pushUp(p shr i)
     }
-    operator fun get(pos: Int): S {
+    operator fun get(pos: Int): D {
         val p = pos + size
         for (i in log downTo 1) pushDown(p shr i)
-        return data[p]
+        return nodes[p]
     }
-    fun prod(st: Int, ed: Int): S {
-        if (st == ed) return e()
+    inline fun <R> query(st: Int, ed: Int, query: D.() -> R, merge: (R, R) -> R): R {
         var (cl, cr) = st + size to ed + size
         val (clo, cro) = cl.countTrailingZeroBits() to cr.countTrailingZeroBits()
         for (i in log downTo 1) {
             if (clo < i) pushDown(cl shr i)
             if (cro < i) pushDown(cr - 1 shr i)
         }
-        var (l, r) = e() to e()
+        var (l, r) = null as R? to null as R?
         while (cl < cr) {
-            if (cl and 1 == 1) l = op(l, data[cl++])
-            if (cr and 1 == 1) r = op(data[--cr], r)
+            if (cl and 1 == 1) l = if (l == null) nodes[cl++].query() else merge(l, nodes[cl++].query())
+            if (cr and 1 == 1) r = if (r == null) nodes[--cr].query() else merge(nodes[--cr].query(), r)
             cl = cl shr 1; cr = cr shr 1
         }
-        return op(l, r)
+        return if (l == null) r!! else if (r == null) l else merge(l, r)
     }
-    fun prodAll() = data[1]
-    fun apply(pos: Int, f: F) {
+    inline fun <R> queryAll(query: D.() -> R) = nodes[1].query()
+    fun update(pos: Int, upd: T) {
         val p = pos + size
         for (i in log downTo 1) pushDown(p shr i)
-        data[p] = data[p].mapping(f)
+        nodes[p].acceptTag(upd)
         for (i in 1 .. log) pushUp(p shr i)
     }
-    fun apply(st: Int, ed: Int, f: F) {
+    fun update(st: Int, ed: Int, upd: T) {
         if (st == ed) return
         val (cl, cr) = st + size to ed + size
         val (clo, cro) = cl.countTrailingZeroBits() to cr.countTrailingZeroBits()
@@ -86,8 +85,8 @@ class FuncLazySegmentTree<S, F>(val n: Int, init: ((Int) -> S)? = null,
         }
         var (l, r) = cl to cr
         while (l < r) {
-            if (l and 1 == 1) accept(l++, f)
-            if (r and 1 == 1) accept(--r, f)
+            if (l and 1 == 1) nodes[l++].acceptTag(upd)
+            if (r and 1 == 1) nodes[--r].acceptTag(upd)
             l = l shr 1; r = r shr 1
         }
         for (i in 1 .. log) {
@@ -97,27 +96,14 @@ class FuncLazySegmentTree<S, F>(val n: Int, init: ((Int) -> S)? = null,
     }
 }
 
-fun <S, F> funcLazySeg(
-    n: Int, init: (Int) -> S, op: (S, S) -> S, e: () -> S,
-    mapping: S.(tag: F) -> S, composition: F.(F) -> F, id: () -> F,
-    newDataArray: (Int) -> SegmentOpArray<S>, newLazyArray: (Int) -> SegmentOpArray<F>
-): FuncLazySegmentTree<S, F> {
-    val size = 1 shl ceilingLog(n)
-    val dataArray = newDataArray(size shl 1)
-    val lazyArray = newLazyArray(size)
-    return FuncLazySegmentTree(n, init, op, e, mapping, composition, id, dataArray, lazyArray)
-}
+typealias SegNode<D, T> = LazySegmentNode<D, T>
+typealias Seg<D, T> = LazySegment<D, T>
 
-// 自己的版本，比上面的时间快些，内存大些
+// 自己的版本，树版本
 // 使用时是闭区间
-abstract class LazySegmentTreeNode<D : LazySegmentTreeNode<D, T>, T>(val cl: Int, val cr: Int, val mid: Int = cl + cr shr 1) {
+abstract class LazySegmentTreeNode<D : LazySegmentTreeNode<D, T>, T>(val cl: Int, val cr: Int, val mid: Int = cl + cr shr 1) : LazySegmentNode<D, T> {
     var l: D? = null
     var r: D? = null
-    abstract var tag: T
-    abstract fun tagAvailable(): Boolean
-    abstract fun clearTag()
-    abstract fun acceptTag(other: T)
-    abstract fun update(l: D, r: D)
 }
 class LazySegmentTree<D : LazySegmentTreeNode<D, T>, T>(start: Int, end: Int, val newNode: (cl: Int, cr: Int) -> D) {
     private fun D.build(init: D.(Int) -> Unit) {
@@ -158,3 +144,6 @@ class LazySegmentTree<D : LazySegmentTreeNode<D, T>, T>(start: Int, end: Int, va
     fun <R> query(st: Int, ed: Int, query: D.() -> R, merge: (R, R) -> R) = seg.query(st, ed, query, merge)!!
     fun <R> queryAll(query: D.() -> R) = seg.query()
 }
+
+typealias SegTreeNode<D, T> = LazySegmentTreeNode<D, T>
+typealias SegTree<D, T> = LazySegmentTree<D, T>

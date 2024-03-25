@@ -2,10 +2,11 @@ package com.tauros.cp.archive.ds
 
 import com.tauros.cp.FastReader
 import com.tauros.cp.FastWriter
+import com.tauros.cp.ar
 import com.tauros.cp.common.boolean
 import com.tauros.cp.common.int
-import com.tauros.cp.structure.SegTree
-import com.tauros.cp.structure.SegTreeNode
+import com.tauros.cp.structure.Seg
+import com.tauros.cp.structure.SegNode
 
 /**
  * @author tauros
@@ -17,15 +18,11 @@ private val wt = FastWriter(System.out, bufCap)
 
 private fun solve() {
     // https://codeforces.com/problemset/problem/145/E
-    // 对象版模板，可AC代码
+    // 非递归版模板，时间和空间都很省
     val (n, m) = rd.ni() to rd.ni()
     val str = rd.ns(n)
 
-    class Info(cl: int, cr: int) : SegTreeNode<Info, boolean>(cl, cr) {
-        var c00: int = 0
-        var c11: int = 0
-        var c01: int = 0
-        var c10: int = 0
+    data class Info(var c00: int = 0, var c11: int = 0, var c01: int = 0, var c10: int = 0) : SegNode<Info, boolean> {
         override var tag = false
         override fun tagAvailable() = tag
         override fun clearTag() { tag = false }
@@ -41,8 +38,7 @@ private fun solve() {
             c10 = maxOf(l.c11 + r.c10, l.c10 + r.c00)
         }
     }
-    val seg = SegTree(0, n - 1) { cl, cr -> Info(cl, cr) }
-    seg.build {
+    val seg = Seg(n, { ar(it) { Info() } }) {
         if (str[it] == '4') c00 = 1 else c11 = 1
         c01 = 1; c10 = 1
     }
@@ -53,7 +49,7 @@ private fun solve() {
             wt.println(ans.c01)
         } else {
             val (l, r) = rd.ni() - 1 to rd.ni() - 1
-            seg.update(l, r, true)
+            seg.update(l, r + 1, true)
         }
     }
 }
