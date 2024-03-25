@@ -10,6 +10,4 @@ class Seg {
 }
 
 fun main(args: Array<String>) {
-    readLine()
-    System.`in`.bufferedReader()
 }

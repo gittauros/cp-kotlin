@@ -115,9 +115,7 @@ abstract class LazySegmentTreeTagNode<D : LazySegmentTreeTagNode<D, T>, T>(val c
     var r: D? = null
 }
 abstract class LazySegmentTreeNonTagNode<D : LazySegmentTreeNonTagNode<D>>(cl: Int, cr: Int, mid: Int = cl + cr shr 1) : LazySegmentTreeTagNode<D, Unit>(cl, cr, mid) {
-    override var tag: Unit
-        get() = Unit
-        set(v) {  }
+    override var tag = Unit
     override fun tagAvailable() = false
     override fun clearTag() { }
     override fun acceptTag(other: Unit) { }
