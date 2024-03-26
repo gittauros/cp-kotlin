@@ -13,6 +13,10 @@ import kotlin.random.Random
  * @author tauros
  */
 // SortedList定义
+interface SortedListIterator<K> : MutableListIterator<K> {
+    override fun set(element: K) = TODO("Not yet implemented")
+    override fun add(element: K) = TODO("Not yet implemented")
+}
 abstract class SortedList<K>(protected val comparator: Comparator<K>) : MutableList<K> {
     abstract override fun iterator(): SortedListIterator<K>
     abstract override fun listIterator(): SortedListIterator<K>
@@ -21,10 +25,6 @@ abstract class SortedList<K>(protected val comparator: Comparator<K>) : MutableL
     override fun set(index: Int, element: K) = TODO("Not yet implemented")
     override fun add(index: Int, element: K) = TODO("Not yet implemented")
     override fun subList(fromIndex: Int, toIndex: Int) = TODO("Not yet implemented")
-    interface SortedListIterator<K> : MutableListIterator<K> {
-        override fun set(element: K) = TODO("Not yet implemented")
-        override fun add(element: K) = TODO("Not yet implemented")
-    }
     abstract fun ceilingIndex(element: K): Int
     abstract fun higherIndex(element: K): Int
     abstract fun floorIndex(element: K): Int
@@ -36,6 +36,44 @@ abstract class SortedList<K>(protected val comparator: Comparator<K>) : MutableL
 
 // https://github.com/grantjenks/python-sortedcontainers/blob/master/src/sortedcontainers/sortedlist.py
 // 与python sortedList基本相同的分块实现
+class BlockSortedListIterator<K>(private val sortedList: BlockSortedList<K>) : SortedListIterator<K> {
+    constructor(index: Int, sortedList: BlockSortedList<K>) : this(sortedList) {
+        idx = index
+    }
+    private var idx = -1
+    override fun hasPrevious() = idx - 1 >= 0
+    override fun nextIndex() = idx + 1
+    override fun previous(): K {
+        sortedList.indexCheck(idx - 1)
+        return sortedList[--idx]
+    }
+    override fun previousIndex() = idx - 1
+    override fun hasNext() = idx + 1 < sortedList.size
+    override fun next(): K {
+        sortedList.indexCheck(idx + 1)
+        return sortedList[++idx]
+    }
+    override fun remove() {
+        sortedList.indexCheck(idx)
+        sortedList.removeAt(idx)
+    }
+}
+abstract class BlockSortedListValueList<K>(protected val blockSize: Int, protected val comparator: Comparator<K>) : Iterable<K> {
+    abstract val size: Int
+    fun newCapacity(old: Int, blockSize: Int) = minOf(1e8.toInt(), maxOf(5, old + minOf((old shr 1), blockSize)))
+    abstract fun add(element: K)
+    abstract fun add(index: Int, element: K)
+    abstract fun addAll(other: BlockSortedListValueList<K>)
+    abstract fun insort(element: K)
+    abstract fun remove(from: Int, to: Int)
+    abstract operator fun get(index: Int): K
+    abstract operator fun set(index: Int, element: K)
+    abstract fun appended(vararg others: BlockSortedListValueList<K>): BlockSortedListValueList<K>
+    abstract fun copyOfRange(from: Int, to: Int): BlockSortedListValueList<K>
+    abstract fun sort()
+    abstract fun clear()
+    override fun toString() = "[" + this.toList().joinToString(", ") + "]"
+}
 abstract class BlockSortedList<K>(val blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: Comparator<K>) : SortedList<K>(comparator) {
     companion object {
         val DEFAULT_BLOCK_SIZE = 512
@@ -43,27 +81,11 @@ abstract class BlockSortedList<K>(val blockSize: Int = DEFAULT_BLOCK_SIZE, compa
     override val size: Int
         get() = len
     protected var len = 0
-    abstract class ValueList<K>(protected val blockSize: Int, protected val comparator: Comparator<K>) : Iterable<K> {
-        abstract val size: Int
-        fun newCapacity(old: Int, blockSize: Int) = minOf(1e8.toInt(), maxOf(5, old + minOf((old shr 1), blockSize)))
-        abstract fun add(element: K)
-        abstract fun add(index: Int, element: K)
-        abstract fun addAll(other: ValueList<K>)
-        abstract fun insort(element: K)
-        abstract fun remove(from: Int, to: Int)
-        abstract operator fun get(index: Int): K
-        abstract operator fun set(index: Int, element: K)
-        abstract fun appended(vararg others: ValueList<K>): ValueList<K>
-        abstract fun copyOfRange(from: Int, to: Int): ValueList<K>
-        abstract fun sort()
-        abstract fun clear()
-        override fun toString() = "[" + this.toList().joinToString(", ") + "]"
-    }
-    protected val lists = ArrayList<ValueList<K>>(2)
-    protected val maxes: ValueList<K> = valueListOf(emptyList())
+    protected val lists = ArrayList<BlockSortedListValueList<K>>(2)
+    protected val maxes: BlockSortedListValueList<K> = valueListOf(emptyList())
     protected var treeIndex: IntArray? = null
     protected var leafOffset = 0
-    abstract protected fun valueListOf(elements: Collection<K>): ValueList<K>
+    abstract protected fun valueListOf(elements: Collection<K>): BlockSortedListValueList<K>
     override fun add(element: K): Boolean {
         if (maxes.size > 0) {
             val headIdx = findFirst(maxes.size) { comparator.compare(maxes[it], element) > 0 }
@@ -319,29 +341,7 @@ abstract class BlockSortedList<K>(val blockSize: Int = DEFAULT_BLOCK_SIZE, compa
     override fun iterator() = BlockSortedListIterator(this)
     override fun listIterator() = BlockSortedListIterator(this)
     override fun listIterator(index: Int) = BlockSortedListIterator(index, this)
-    class BlockSortedListIterator<K>(private val sortedList: BlockSortedList<K>) : SortedListIterator<K> {
-        constructor(index: Int, sortedList: BlockSortedList<K>) : this(sortedList) {
-            idx = index
-        }
-        private var idx = -1
-        override fun hasPrevious() = idx - 1 >= 0
-        override fun nextIndex() = idx + 1
-        override fun previous(): K {
-            sortedList.indexCheck(idx - 1)
-            return sortedList[--idx]
-        }
-        override fun previousIndex() = idx - 1
-        override fun hasNext() = idx + 1 < sortedList.size
-        override fun next(): K {
-            sortedList.indexCheck(idx + 1)
-            return sortedList[++idx]
-        }
-        override fun remove() {
-            sortedList.indexCheck(idx)
-            sortedList.removeAt(idx)
-        }
-    }
-    private fun indexCheck(index: Int) {
+    fun indexCheck(index: Int) {
         if (index !in 0 until len) throw IndexOutOfBoundsException("$index out of range 0 until $len")
     }
     private fun positionCheck(position: Pair<Int, Int>) {
@@ -364,6 +364,90 @@ abstract class BlockSortedList<K>(val blockSize: Int = DEFAULT_BLOCK_SIZE, compa
 }
 
 // IntBlockSortedList实现
+class IntBlockSortedListValueList(blockSize: Int, comparator: Comparator<Int>) : BlockSortedListValueList<Int>(blockSize, comparator) {
+    constructor(initArray: IntArray, blockSize: Int, comparator: Comparator<Int>) : this(blockSize, comparator) {
+        array = initArray
+        len = array.size
+    }
+    override val size: Int
+        get() = len
+    private var array = IntArray(5)
+    private var len = 0
+    override fun add(element: Int) {
+        ensureCapacity(len + 1)
+        array[len++] = element
+    }
+    override fun add(index: Int, element: Int) {
+        ensureCapacity(len + 1)
+        System.arraycopy(array, index, array, index + 1, len - index)
+        array[index] = element
+        len += 1
+    }
+    override fun addAll(other: BlockSortedListValueList<Int>) {
+        ensureCapacity(len + other.size)
+        for (num in other) array[len++] = num
+    }
+    override fun insort(element: Int) {
+        ensureCapacity(len + 1)
+        val idx = findFirst(len) { comparator.compare(array[it], element) >= 0 }
+        System.arraycopy(array, idx, array, idx + 1, len - idx)
+        array[idx] = element
+        len += 1
+    }
+    override fun remove(from: Int, to: Int) {
+        var tail = minOf(to, len)
+        var head = minOf(tail, from)
+        if (head >= tail) return
+        while (tail < len) {
+            array[head++] = array[tail++]
+        }
+        len = head
+    }
+    override fun get(index: Int): Int {
+        indexCheck(index)
+        return array[index]
+    }
+    override fun set(index: Int, element: Int) {
+        indexCheck(index)
+        array[index] = element
+    }
+    override fun iterator() = object : Iterator<Int> {
+        var idx = -1
+        override fun hasNext() = idx + 1 < len
+        override fun next(): Int {
+            indexCheck(idx + 1)
+            idx += 1
+            return array[idx]
+        }
+    }
+    override fun appended(vararg others: BlockSortedListValueList<Int>): IntBlockSortedListValueList {
+        val new = IntArray(len + others.sumOf { it.size })
+        array.copyInto(new, 0, 0, len)
+        var newLen = len
+        for (other in others) for (num in other) {
+            new[newLen++] = num
+        }
+        return IntBlockSortedListValueList(new, blockSize, comparator)
+    }
+    override fun copyOfRange(from: Int, to: Int): IntBlockSortedListValueList {
+        val tail = minOf(to, len)
+        val head = minOf(tail, from)
+        return IntBlockSortedListValueList(array.copyOfRange(head, tail), blockSize, comparator)
+    }
+    override fun sort() { array.mergeSort(0, len) { a, b -> comparator.compare(a, b) } }
+    override fun clear() { len = 0 }
+    private fun indexCheck(index: Int) {
+        if (index !in 0 until len) throw IndexOutOfBoundsException("$index out of range 0 until $len")
+    }
+    private fun ensureCapacity(newSize: Int) {
+        if (newSize <= array.size) return
+        var new = array.size
+        while (new < newSize) {
+            new = newCapacity(new, blockSize)
+        }
+        array += IntArray(new - array.size)
+    }
+}
 class IntBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Int, Int) -> Int = Int::compareTo) : BlockSortedList<Int>(blockSize, comparator) {
     constructor(elements: IntArray, blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Int, Int) -> Int = Int::compareTo): this(blockSize, comparator) {
         for (num in elements) add(num)
@@ -371,96 +455,12 @@ class IntBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Int, 
     constructor(elements: Collection<Int>, blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Int, Int) -> Int = Int::compareTo): this(blockSize, comparator) {
         addAll(elements)
     }
-    private class IntValueList(blockSize: Int, comparator: Comparator<Int>) : ValueList<Int>(blockSize, comparator) {
-        constructor(initArray: IntArray, blockSize: Int, comparator: Comparator<Int>) : this(blockSize, comparator) {
-            array = initArray
-            len = array.size
-        }
-        override val size: Int
-            get() = len
-        private var array = IntArray(5)
-        private var len = 0
-        override fun add(element: Int) {
-            ensureCapacity(len + 1)
-            array[len++] = element
-        }
-        override fun add(index: Int, element: Int) {
-            ensureCapacity(len + 1)
-            System.arraycopy(array, index, array, index + 1, len - index)
-            array[index] = element
-            len += 1
-        }
-        override fun addAll(other: ValueList<Int>) {
-            ensureCapacity(len + other.size)
-            for (num in other) array[len++] = num
-        }
-        override fun insort(element: Int) {
-            ensureCapacity(len + 1)
-            val idx = findFirst(len) { comparator.compare(array[it], element) >= 0 }
-            System.arraycopy(array, idx, array, idx + 1, len - idx)
-            array[idx] = element
-            len += 1
-        }
-        override fun remove(from: Int, to: Int) {
-            var tail = minOf(to, len)
-            var head = minOf(tail, from)
-            if (head >= tail) return
-            while (tail < len) {
-                array[head++] = array[tail++]
-            }
-            len = head
-        }
-        override fun get(index: Int): Int {
-            indexCheck(index)
-            return array[index]
-        }
-        override fun set(index: Int, element: Int) {
-            indexCheck(index)
-            array[index] = element
-        }
-        override fun iterator() = object : Iterator<Int> {
-            var idx = -1
-            override fun hasNext() = idx + 1 < len
-            override fun next(): Int {
-                indexCheck(idx + 1)
-                idx += 1
-                return array[idx]
-            }
-        }
-        override fun appended(vararg others: ValueList<Int>): IntValueList {
-            val new = IntArray(len + others.sumOf { it.size })
-            array.copyInto(new, 0, 0, len)
-            var newLen = len
-            for (other in others) for (num in other) {
-                new[newLen++] = num
-            }
-            return IntValueList(new, blockSize, comparator)
-        }
-        override fun copyOfRange(from: Int, to: Int): IntValueList {
-            val tail = minOf(to, len)
-            val head = minOf(tail, from)
-            return IntValueList(array.copyOfRange(head, tail), blockSize, comparator)
-        }
-        override fun sort() { array.mergeSort(0, len) { a, b -> comparator.compare(a, b) } }
-        override fun clear() { len = 0 }
-        private fun indexCheck(index: Int) {
-            if (index !in 0 until len) throw IndexOutOfBoundsException("$index out of range 0 until $len")
-        }
-        private fun ensureCapacity(newSize: Int) {
-            if (newSize <= array.size) return
-            var new = array.size
-            while (new < newSize) {
-                new = newCapacity(new, blockSize)
-            }
-            array += IntArray(new - array.size)
-        }
-    }
     override fun plus(elements: Collection<Int>): SortedList<Int> {
         val all = lists.map { it.toList() }.reduceOrNull(List<Int>::plus).orEmpty()
         return IntBlockSortedList(all + elements.toList(), blockSize ) { a, b -> comparator.compare(a, b) }
     }
-    override fun valueListOf(elements: Collection<Int>): ValueList<Int> {
-        return IntValueList(elements.toIntArray(), blockSize, comparator)
+    override fun valueListOf(elements: Collection<Int>): BlockSortedListValueList<Int> {
+        return IntBlockSortedListValueList(elements.toIntArray(), blockSize, comparator)
     }
     fun toIntArray(): IntArray {
         val new = IntArray(len)
@@ -477,6 +477,90 @@ class IntBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Int, 
 }
 
 // LongBlockSortedList实现
+class LongBlockSortedListValueList(blockSize: Int, comparator: Comparator<Long>) : BlockSortedListValueList<Long>(blockSize, comparator) {
+    constructor(initArray: LongArray, blockSize: Int, comparator: Comparator<Long>) : this(blockSize, comparator) {
+        array = initArray
+        len = array.size
+    }
+    override val size: Int
+        get() = len
+    private var array = LongArray(5)
+    private var len = 0
+    override fun add(element: Long) {
+        ensureCapacity(len + 1)
+        array[len++] = element
+    }
+    override fun add(index: Int, element: Long) {
+        ensureCapacity(len + 1)
+        System.arraycopy(array, index, array, index + 1, len - index)
+        array[index] = element
+        len += 1
+    }
+    override fun addAll(other: BlockSortedListValueList<Long>) {
+        ensureCapacity(len + other.size)
+        for (num in other) array[len++] = num
+    }
+    override fun insort(element: Long) {
+        ensureCapacity(len + 1)
+        val idx = findFirst(len) { comparator.compare(array[it], element) >= 0 }
+        System.arraycopy(array, idx, array, idx + 1, len - idx)
+        array[idx] = element
+        len += 1
+    }
+    override fun remove(from: Int, to: Int) {
+        var tail = minOf(to, len)
+        var head = minOf(tail, from)
+        if (head >= tail) return
+        while (tail < len) {
+            array[head++] = array[tail++]
+        }
+        len = head
+    }
+    override fun get(index: Int): Long {
+        indexCheck(index)
+        return array[index]
+    }
+    override fun set(index: Int, element: Long) {
+        indexCheck(index)
+        array[index] = element
+    }
+    override fun iterator() = object : Iterator<Long> {
+        var idx = -1
+        override fun hasNext() = idx + 1 < len
+        override fun next(): Long {
+            indexCheck(idx + 1)
+            idx += 1
+            return array[idx]
+        }
+    }
+    override fun appended(vararg others: BlockSortedListValueList<Long>): LongBlockSortedListValueList {
+        val new = LongArray(len + others.sumOf { it.size })
+        array.copyInto(new, 0, 0, len)
+        var newLen = len
+        for (other in others) for (num in other) {
+            new[newLen++] = num
+        }
+        return LongBlockSortedListValueList(new, blockSize, comparator)
+    }
+    override fun copyOfRange(from: Int, to: Int): LongBlockSortedListValueList {
+        val tail = minOf(to, len)
+        val head = minOf(tail, from)
+        return LongBlockSortedListValueList(array.copyOfRange(head, tail), blockSize, comparator)
+    }
+    override fun sort() { array.mergeSort(0, len) { a, b -> comparator.compare(a, b) } }
+    override fun clear() { len = 0 }
+    private fun indexCheck(index: Int) {
+        if (index !in 0 until len) throw IndexOutOfBoundsException("$index out of range 0 until $len")
+    }
+    private fun ensureCapacity(newSize: Int) {
+        if (newSize <= array.size) return
+        var new = array.size
+        while (new < newSize) {
+            new = newCapacity(new, blockSize)
+        }
+        array += LongArray(new - array.size)
+    }
+}
 class LongBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Long, Long) -> Int = Long::compareTo) : BlockSortedList<Long>(blockSize, comparator) {
     constructor(elements: LongArray, blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Long, Long) -> Int = Long::compareTo): this(blockSize, comparator) {
         for (num in elements) add(num)
@@ -484,96 +568,12 @@ class LongBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Long
     constructor(elements: Collection<Long>, blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Long, Long) -> Int = Long::compareTo): this(blockSize, comparator) {
         addAll(elements)
     }
-    private class LongValueList(blockSize: Int, comparator: Comparator<Long>) : ValueList<Long>(blockSize, comparator) {
-        constructor(initArray: LongArray, blockSize: Int, comparator: Comparator<Long>) : this(blockSize, comparator) {
-            array = initArray
-            len = array.size
-        }
-        override val size: Int
-            get() = len
-        private var array = LongArray(5)
-        private var len = 0
-        override fun add(element: Long) {
-            ensureCapacity(len + 1)
-            array[len++] = element
-        }
-        override fun add(index: Int, element: Long) {
-            ensureCapacity(len + 1)
-            System.arraycopy(array, index, array, index + 1, len - index)
-            array[index] = element
-            len += 1
-        }
-        override fun addAll(other: ValueList<Long>) {
-            ensureCapacity(len + other.size)
-            for (num in other) array[len++] = num
-        }
-        override fun insort(element: Long) {
-            ensureCapacity(len + 1)
-            val idx = findFirst(len) { comparator.compare(array[it], element) >= 0 }
-            System.arraycopy(array, idx, array, idx + 1, len - idx)
-            array[idx] = element
-            len += 1
-        }
-        override fun remove(from: Int, to: Int) {
-            var tail = minOf(to, len)
-            var head = minOf(tail, from)
-            if (head >= tail) return
-            while (tail < len) {
-                array[head++] = array[tail++]
-            }
-            len = head
-        }
-        override fun get(index: Int): Long {
-            indexCheck(index)
-            return array[index]
-        }
-        override fun set(index: Int, element: Long) {
-            indexCheck(index)
-            array[index] = element
-        }
-        override fun iterator() = object : Iterator<Long> {
-            var idx = -1
-            override fun hasNext() = idx + 1 < len
-            override fun next(): Long {
-                indexCheck(idx + 1)
-                idx += 1
-                return array[idx]
-            }
-        }
-        override fun appended(vararg others: ValueList<Long>): LongValueList {
-            val new = LongArray(len + others.sumOf { it.size })
-            array.copyInto(new, 0, 0, len)
-            var newLen = len
-            for (other in others) for (num in other) {
-                new[newLen++] = num
-            }
-            return LongValueList(new, blockSize, comparator)
-        }
-        override fun copyOfRange(from: Int, to: Int): LongValueList {
-            val tail = minOf(to, len)
-            val head = minOf(tail, from)
-            return LongValueList(array.copyOfRange(head, tail), blockSize, comparator)
-        }
-        override fun sort() { array.mergeSort(0, len) { a, b -> comparator.compare(a, b) } }
-        override fun clear() { len = 0 }
-        private fun indexCheck(index: Int) {
-            if (index !in 0 until len) throw IndexOutOfBoundsException("$index out of range 0 until $len")
-        }
-        private fun ensureCapacity(newSize: Int) {
-            if (newSize <= array.size) return
-            var new = array.size
-            while (new < newSize) {
-                new = newCapacity(new, blockSize)
-            }
-            array += LongArray(new - array.size)
-        }
-    }
     override fun plus(elements: Collection<Long>): SortedList<Long> {
         val all = lists.map { it.toList() }.reduceOrNull(List<Long>::plus).orEmpty()
         return LongBlockSortedList(all + elements.toList(), blockSize ) { a, b -> comparator.compare(a, b) }
     }
-    override fun valueListOf(elements: Collection<Long>): ValueList<Long> {
-        return LongValueList(elements.toLongArray(), blockSize, comparator)
+    override fun valueListOf(elements: Collection<Long>): BlockSortedListValueList<Long> {
+        return LongBlockSortedListValueList(elements.toLongArray(), blockSize, comparator)
     }
     fun toLongArray(): LongArray {
         val new = LongArray(len)
