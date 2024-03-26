@@ -4,7 +4,6 @@ import com.tauros.cp.FastReader
 import com.tauros.cp.FastWriter
 import com.tauros.cp.ar
 import com.tauros.cp.common.int
-import com.tauros.cp.common.long
 import com.tauros.cp.structure.Seg
 import com.tauros.cp.structure.SegNonTagNode
 
@@ -20,23 +19,30 @@ private val wt = FastWriter(System.out, bufCap)
 private fun solve() {
     val (n, m) = rd.ni() to rd.ni()
 
-    class Info(var v: long) : SegNonTagNode<Info> {
+    data class Info(var v: int, var cnt: int = 1) : SegNonTagNode<Info> {
         override fun update(l: Info, r: Info) {
-            v = l.v + r.v
+            v = minOf(l.v, r.v)
+            cnt = if (v == l.v) l.cnt else 0
+            if (v == r.v) cnt += r.cnt
         }
     }
     val seg = Seg(n, { ar(it) { Info(0) } }) {
-        v = rd.nl()
+        v = rd.ni()
     }
     repeat(m) {
         val op = rd.ni()
         if (op == 1) {
             val (i, v) = rd.na(2)
-            seg[i] = Info(v.toLong())
+            seg[i] = Info(v)
         } else {
             val (l, r) = rd.na(2)
-            val ans = seg.query(l, r, { v }) { a, b -> a + b }
-            wt.println(ans)
+            val (v, cnt) = seg.query(l, r, { Info(v, cnt) }) { a, b ->
+                val v = minOf(a.v, b.v)
+                var cnt = if (v == a.v) a.cnt else 0
+                if (v == b.v) cnt += b.cnt
+                Info(v, cnt)
+            }
+            wt.println("$v $cnt")
         }
     }
 }
