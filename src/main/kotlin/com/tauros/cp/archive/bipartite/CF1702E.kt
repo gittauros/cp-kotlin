@@ -1,4 +1,4 @@
-package com.tauros.cp.archive.graph.bipartite
+package com.tauros.cp.archive.bipartite
 
 import com.tauros.cp.FastReader
 import com.tauros.cp.FastWriter
