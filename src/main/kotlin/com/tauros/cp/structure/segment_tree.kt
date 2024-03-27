@@ -215,17 +215,19 @@ class LazySegmentTree<D : LazySegmentTreeTagNode<D, T>, T>(start: Int, end: Int,
         return merge(l!!.query(st, ed, query, merge), r!!.query(st, ed, query, merge))
     }
     private fun <R> D.first(ed: Int, query: D.() -> R, judge: (R) -> Boolean, merge: (R, R) -> R): Pair<Int, R> {
-        if (ed <= mid) return l!!.first(ed, query, judge, merge)
         if (cl == cr) {
             val cur = query()
             return if (judge(cur)) cl to cur else cr + 1 to cur
         }
+        pushDown()
+        if (ed <= mid) return l!!.first(ed, query, judge, merge)
         val (end, right) = r!!.first(ed, query, judge, merge)
         if (end > mid + 1) return end to right
         val cur = merge(l!!.query(), right)
         if (judge(cur)) return cl to cur
         var (iter, sum) = l!! to right
         while (iter.cl != iter.cr) {
+            iter.pushDown()
             val nex = merge(iter.r!!.query(), sum)
             if (judge(nex)) {
                 sum = nex; iter = iter.l!!
@@ -235,17 +237,19 @@ class LazySegmentTree<D : LazySegmentTreeTagNode<D, T>, T>(start: Int, end: Int,
         return if (judge(nex)) iter.cl to nex else iter.cr + 1 to sum
     }
     private fun <R> D.last(st: Int, query: D.() -> R, judge: (R) -> Boolean, merge: (R, R) -> R): Pair<Int, R> {
-        if (st > mid) return r!!.last(st, query, judge, merge)
         if (cl == cr) {
             val cur = query()
             return if (judge(cur)) cr to cur else cl - 1 to cur
         }
+        pushDown()
+        if (st > mid) return r!!.last(st, query, judge, merge)
         val (end, left) = l!!.last(st, query, judge, merge)
         if (end < mid) return end to left
         val cur = merge(left, r!!.query())
         if (judge(cur)) return cr to cur
         var (iter, sum) = r!! to left
         while (iter.cl != iter.cr) {
+            iter.pushDown()
             val nex = merge(sum, iter.l!!.query())
             if (judge(nex)) {
                 sum = nex; iter = iter.r!!
