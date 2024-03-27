@@ -33,7 +33,7 @@ private fun solve() {
         val op = rd.ni()
         if (op == 1) {
             val (i, v) = rd.na(2)
-            seg[i] = Info(v)
+            seg.update(i) { this.v = v }
         } else {
             val (l, r) = rd.na(2)
             val (v, cnt) = seg.query(l, r, { Info(v, cnt) }) { a, b ->

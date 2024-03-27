@@ -32,7 +32,7 @@ private fun solve() {
         val op = rd.ni()
         if (op == 1) {
             val (i, v) = rd.na(2)
-            seg[i] = Info(v.toLong())
+            seg.update(i) { this.v = v.toLong() }
         } else {
             val (l, r) = rd.na(2)
             val ans = seg.query(l, r, { v }) { a, b -> a + b }

@@ -47,19 +47,19 @@ class LazySegment<D : LazySegmentNode<D, T>, T>(val n: Int, newArray: (Int) -> A
             nodes[p].clearTag()
         }
     }
-    private fun pushUp(p: Int) {
+    fun pushUp(p: Int) {
         nodes[p].update(nodes[p shl 1], nodes[p shl 1 or 1])
     }
-    operator fun set(pos: Int, d: D) {
+    inline fun update(pos: Int, upd: D.() -> Unit) {
         val p = pos + size
         for (i in log downTo 1) pushDown(p shr i)
-        nodes[p] = d
+        nodes[p].upd()
         for (i in 1 .. log) pushUp(p shr i)
     }
-    operator fun get(pos: Int): D {
+    inline fun <R> query(pos: Int, query: D.() -> R): R {
         val p = pos + size
         for (i in log downTo 1) pushDown(p shr i)
-        return nodes[p]
+        return nodes[p].query()
     }
     inline fun <R> query(st: Int, ed: Int, query: D.() -> R, merge: (R, R) -> R): R {
         var (cl, cr) = st + size to ed + size
@@ -139,6 +139,18 @@ class LazySegmentTree<D : LazySegmentTreeTagNode<D, T>, T>(start: Int, end: Int,
         }
     }
     fun D.pushUp() { update(l!!, r!!) }
+    private fun D.update(pos: Int, upd: D.() -> Unit) {
+        if (cl == cr) { this.upd(); return }
+        pushDown()
+        if (pos <= mid) l!!.update(pos, upd)
+        else r!!.update(pos, upd)
+        pushUp()
+    }
+    private fun <R> D.query(pos: Int, query: D.() -> R): R {
+        if (cl == cr) return query()
+        pushDown()
+        return if (pos <= mid) l!!.query(pos, query) else r!!.query(pos, query)
+    }
     private fun D.update(st: Int, ed: Int, upd: T) {
         if (cl >= st && cr <= ed) { acceptTag(upd); return }
         pushDown()
@@ -155,6 +167,8 @@ class LazySegmentTree<D : LazySegmentTreeTagNode<D, T>, T>(start: Int, end: Int,
     }
     val seg = newNode(start, end)
     fun build(init: D.(Int) -> Unit) = seg.build(init)
+    fun update(pos: Int, upd: D.() -> Unit) = seg.update(pos, upd)
+    fun <R> query(pos: Int, query: D.() -> R): R = seg.query(pos, query)
     fun update(st: Int, ed: Int, upd: T) = seg.update(st, ed, upd)
     fun <R> query(st: Int, ed: Int, query: D.() -> R, merge: (R, R) -> R) = seg.query(st, ed, query, merge)!!
     fun <R> queryAll(query: D.() -> R) = seg.query()
