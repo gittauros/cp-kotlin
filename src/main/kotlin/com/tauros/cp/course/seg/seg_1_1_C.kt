@@ -1,4 +1,4 @@
-package com.tauros.cp.course
+package com.tauros.cp.course.seg
 
 import com.tauros.cp.FastReader
 import com.tauros.cp.FastWriter
