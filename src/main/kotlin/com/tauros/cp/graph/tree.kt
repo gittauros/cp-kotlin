@@ -84,6 +84,7 @@ class TreeInfo<G : Graph>(val g: G, val root: Int, val nodeCnt: Int = g.nodeCap)
 
     fun dfnRange(u: Int) = dfn[u] until dfn[u] + size[u]
 }
+fun <G: Graph, R> G.withTreeInfo(root: Int, calc: TreeInfo<G>.() -> R) = TreeInfo(this, root, nodeCap).calc()
 
 fun <G : Graph> G.dsu(root: Int, calc: TreeInfo<G>.(Int, Int, Boolean) -> Unit) {
     fun TreeInfo<G>.dsu(u: Int, fa: Int, keep: Boolean) {
