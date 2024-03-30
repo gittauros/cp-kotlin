@@ -43,6 +43,10 @@ class Matrix(matrix: Array<IntArray>, clone: Boolean = true) : Iterable<IntArray
         }
         return Matrix(ans, false)
     }
+    fun copyInto(other: Matrix) {
+        for (i in 0 until rows) for (j in 0 until cols)
+            other[i][j] = elements[i][j]
+    }
     fun pow(exp: Int) = pow(exp.toLong())
     fun pow(exp: Long): Matrix {
         var (a, p) = this to exp

@@ -114,8 +114,7 @@ class LazySegment<D : LazySegmentNode<D, T>, T>(val n: Int, newArray: (Int) -> A
             while (cr > 1 && cr and 1 == 1) cr = cr shr 1
             if (!judge(if (sum == null) nodes[cr].query() else merge(nodes[cr].query(), sum))) {
                 while (cr < size) {
-                    pushDown(cr)
-                    cr = cr shl 1 or 1
+                    pushDown(cr); cr = cr shl 1 or 1
                     val nex = if (sum == null) nodes[cr].query() else merge(nodes[cr].query(), sum)
                     if (judge(nex)) {
                         sum = nex; cr -= 1
@@ -136,8 +135,7 @@ class LazySegment<D : LazySegmentNode<D, T>, T>(val n: Int, newArray: (Int) -> A
             while (cl and 1 == 0) cl = cl shr 1
             if (!judge(if (sum == null) nodes[cl].query() else merge(sum, nodes[cl].query()))) {
                 while (cl < size) {
-                    pushDown(cl)
-                    cl = cl shl 1
+                    pushDown(cl); cl = cl shl 1
                     val nex = if (sum == null) nodes[cl].query() else merge(sum, nodes[cl].query())
                     if (judge(nex)) {
                         sum = nex; cl += 1
