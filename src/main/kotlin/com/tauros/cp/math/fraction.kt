@@ -69,6 +69,7 @@ class Frac(b: Int, a: Int) : Comparable<Frac> {
 
 fun Int.toFrac() = Frac(this, 1)
 
+// b/a
 class FracLong(b: Long, a: Long) : Comparable<FracLong> {
     companion object {
         val ZERO = FracLong(0, 1)
