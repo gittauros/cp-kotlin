@@ -16,7 +16,7 @@ private val wt = FastWriter(System.out, bufCap)
 
 private fun solve() {
     // https://codeforces.com/problemset/problem/3/D
-    // 返回贪心，正确性在于每个前缀都必须满足括号差大于等于0
+    // 反悔贪心，正确性在于每个前缀都必须满足括号差大于等于0
     // 因此前缀的花费考虑优先级比后缀的高，所以在最低限度满足前缀条件时可以是最优的
     val str = rd.ns()
     val m = str.count { it == '?' }

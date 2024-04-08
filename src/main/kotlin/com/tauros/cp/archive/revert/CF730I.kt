@@ -18,7 +18,7 @@ private val wt = FastWriter(System.out, bufCap)
 
 private fun solve() {
     // https://codeforces.com/problemset/problem/730/I
-    // 返回贪心例题
+    // 反悔贪心例题
     val (n, p, s) = rd.na(3)
     val pVal = rd.na(n)
     val sVal = rd.na(n)
