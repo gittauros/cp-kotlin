@@ -1,4 +1,4 @@
-package com.tauros.cp.archive.dp
+package com.tauros.cp.archive.dp.bitmask
 
 import com.tauros.cp.ar
 import com.tauros.cp.common.copyInto
