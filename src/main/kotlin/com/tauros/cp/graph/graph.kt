@@ -128,6 +128,8 @@ class LGraph(nodeCap: Int, edgeCap: Int = maxOf(nodeCap, MIN_EDGE_COUNT) * 2, ne
     }
 }
 
+// general
+
 open class EdgeGraph<E>(val nodeCap: Int, var edgeCap: Int = maxOf(nodeCap, MIN_EDGE_COUNT), private val needFrom: Boolean = false) {
     companion object {
         val MAX_EDGE_COUNT = 1e8.toInt()
