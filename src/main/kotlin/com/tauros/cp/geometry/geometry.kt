@@ -2,6 +2,8 @@ package com.tauros.cp.geometry
 
 import com.tauros.cp.common.sqrt
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 
@@ -112,6 +114,8 @@ data class DVector2(val x: Double, val y: Double) {
     infix fun isParallel(other: DVector2) = abs(this cross other) < 1e-6
     infix fun isPerpendicular(other: DVector2) = abs(this dot other) < 1e-6
     infix fun side(other: DVector2) = (this cross other).let { if (it < 0) -1 else if (it > 0) 1 else 0 }
+    // 逆时针
+    fun rotated(angle: Double) = DVector2(x * cos(angle) - y * sin(angle), x * sin(angle) + y * cos(angle))
     fun perpVector() = DVector2(-y, x)
     fun normalized() = this * (1 / len())
     override fun equals(other: Any?): Boolean {
