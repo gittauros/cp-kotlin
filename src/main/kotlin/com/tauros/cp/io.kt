@@ -24,7 +24,8 @@ open class FastReader(private val input: InputStream, bufCap: Int = 8192) {
             while (bId == size) { size = input.read(buf); if (size == -1) return NC; bId = 0 }
             return buf[bId++].toInt().toChar()
         }
-    private fun isWhitespace(c: Char) = c.code !in 33..126
+    private fun isWhitespace(c: Char) = c.toInt() !in 33..126
+//    private fun isWhitespace(c: Char) = c.code !in 33..126
     private fun skip(): Char { var b: Char; while (char.also { b = it } != NC && isWhitespace(b)); return b }
     fun ns() = buildString {
         while (true) { c = char; if (!isWhitespace(c)) break }; append(c);

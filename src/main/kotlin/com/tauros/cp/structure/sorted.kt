@@ -32,6 +32,19 @@ abstract class SortedList<K>(protected val comparator: Comparator<K>) : MutableL
     abstract fun count(element: K): Int
     abstract operator fun plusAssign(elements: Collection<K>)
     abstract operator fun plus(elements: Collection<K>): SortedList<K>
+    override fun retainAll(elements: Collection<K>): Boolean {
+        var removed = false
+        val iter = listIterator()
+        while (iter.hasNext()) {
+            val cur = iter.next()
+            if (cur !in elements) {
+                iter.remove()
+                removed = true
+            }
+        }
+        return removed
+    }
+    override fun removeAll(elements: Collection<K>) = elements.all { remove(it) }
 }
 
 // https://github.com/grantjenks/python-sortedcontainers/blob/master/src/sortedcontainers/sortedlist.py
@@ -251,7 +264,6 @@ abstract class BlockSortedList<K>(val blockSize: Int = DEFAULT_BLOCK_SIZE, compa
         }
         return false
     }
-    override fun removeAll(elements: Collection<K>) = elements.all { remove(it) }
     override fun removeAt(index: Int): K {
         indexCheck(index)
         val (headIdx, subIdx) = position(index)
@@ -292,18 +304,6 @@ abstract class BlockSortedList<K>(val blockSize: Int = DEFAULT_BLOCK_SIZE, compa
             treeIndex = null
         }
         return element
-    }
-    override fun retainAll(elements: Collection<K>): Boolean {
-        var removed = false
-        val iter = listIterator()
-        while (iter.hasNext()) {
-            val cur = iter.next()
-            if (cur !in elements) {
-                iter.remove()
-                removed = true
-            }
-        }
-        return removed
     }
     override fun ceilingIndex(element: K): Int {
         if (maxes.size == 0) return 0
@@ -455,7 +455,7 @@ class IntBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Int, 
     constructor(elements: Collection<Int>, blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Int, Int) -> Int = Int::compareTo): this(blockSize, comparator) {
         addAll(elements)
     }
-    override fun plus(elements: Collection<Int>): SortedList<Int> {
+    override fun plus(elements: Collection<Int>): IntBlockSortedList {
         val all = lists.map { it.toList() }.reduceOrNull(List<Int>::plus).orEmpty()
         return IntBlockSortedList(all + elements.toList(), blockSize ) { a, b -> comparator.compare(a, b) }
     }
@@ -568,7 +568,7 @@ class LongBlockSortedList(blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Long
     constructor(elements: Collection<Long>, blockSize: Int = DEFAULT_BLOCK_SIZE, comparator: (Long, Long) -> Int = Long::compareTo): this(blockSize, comparator) {
         addAll(elements)
     }
-    override fun plus(elements: Collection<Long>): SortedList<Long> {
+    override fun plus(elements: Collection<Long>): LongBlockSortedList {
         val all = lists.map { it.toList() }.reduceOrNull(List<Long>::plus).orEmpty()
         return LongBlockSortedList(all + elements.toList(), blockSize ) { a, b -> comparator.compare(a, b) }
     }
