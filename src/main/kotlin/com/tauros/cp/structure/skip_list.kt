@@ -28,7 +28,6 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
     init {
         tail.backward = head
     }
-
     override fun clear() {
         for (level in 0 until maxHeight) {
             head.levelForward[level] = null
@@ -37,11 +36,9 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
         tail.backward = head
         len = 0; top = 0
     }
-
     fun indexCheck(index: Int) {
         if (index !in 0 until len) throw IndexOutOfBoundsException("$index out of range 0 until $len")
     }
-
     private fun randomHeight(): Int {
         for (level in 1 until maxHeight) {
             val percentile = abs(random.nextInt()) % 100
@@ -49,7 +46,6 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
         }
         return maxHeight
     }
-
     fun view() = buildList {
         var iter = head
         while (true) {
@@ -61,7 +57,6 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
             iter = next
         }
     }
-
     private fun find(update: Array<SkipListNode<K>?>?, rank: IntArray?, value: K) {
         var find = head
         for (level in top - 1 downTo 0) {
@@ -81,7 +76,6 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
             }
         }
     }
-
     private fun findAt(update: Array<SkipListNode<K>?>, rank: Int) {
         var find = head
         var preRank = 0
@@ -95,55 +89,53 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
             update[level] = find
         }
     }
-
-    private fun lowerNode(value: K): SkipListNode<K> {
-        if (size == 0) return head
-        var find = head
+    private fun lowerNode(value: K): Pair<SkipListNode<K>, Int> {
+        if (size == 0) return head to 0
+        var (find, rank) = head to 0
         for (level in top - 1 downTo 0) {
             while (find.levelForward[level]!!.node != tail &&
                 comparator.compare(find.levelForward[level]!!.node.value, value) < 0) {
+                rank += find.levelForward[level]!!.span
                 find = find.levelForward[level]!!.node
             }
         }
-        return find
+        return find to rank
     }
-
-    private fun ceilingNode(value: K): SkipListNode<K> {
-        if (size == 0) return tail
-        var find = head
+    private fun ceilingNode(value: K): Pair<SkipListNode<K>, Int> {
+        if (size == 0) return tail to 0
+        var (find, rank) = head to 0
         for (level in top - 1 downTo 0) {
             while (find.levelForward[level]!!.node != tail &&
                 comparator.compare(find.levelForward[level]!!.node.value, value) < 0) {
+                rank += find.levelForward[level]!!.span
                 find = find.levelForward[level]!!.node
             }
         }
-        return if (find == tail) tail else find.levelForward[0]!!.node
+        return if (find == tail) tail to rank else find.levelForward[0]!!.node to rank + 1
     }
-
-    private fun floorNode(value: K): SkipListNode<K> {
-        if (size == 0) return head
-        var find = head
+    private fun floorNode(value: K): Pair<SkipListNode<K>, Int> {
+        if (size == 0) return head to 0
+        var (find, rank) = head to 0
+        for (level in top - 1 downTo 0) {
+            while (find.levelForward[level]!!.node != tail &&
+                comparator.compare(find.levelForward[level]!!.node.value, value) <= 0) {
+                rank += find.levelForward[level]!!.span
+                find = find.levelForward[level]!!.node
+            }
+        }
+        return find to rank
+    }
+    private fun higherNode(value: K): Pair<SkipListNode<K>, Int> {
+        if (size == 0) return tail to 0
+        var (find, rank) = head to 0
         for (level in top - 1 downTo 0) {
             while (find.levelForward[level]!!.node != tail &&
                 comparator.compare(find.levelForward[level]!!.node.value, value) <= 0) {
                 find = find.levelForward[level]!!.node
             }
         }
-        return find
+        return if (find == tail) tail to rank else find.levelForward[0]!!.node to rank + 1
     }
-
-    private fun higherNode(value: K): SkipListNode<K> {
-        if (size == 0) return tail
-        var find = head
-        for (level in top - 1 downTo 0) {
-            while (find.levelForward[level]!!.node != tail &&
-                comparator.compare(find.levelForward[level]!!.node.value, value) <= 0) {
-                find = find.levelForward[level]!!.node
-            }
-        }
-        return if (find == tail) tail else find.levelForward[0]!!.node
-    }
-
     fun insert(value: K): Int {
         val update = Array<SkipListNode<K>?>(maxHeight) { null }
         val rank = IntArray(maxHeight)
@@ -178,7 +170,6 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
         len += 1
         return rank[0]
     }
-
     fun delete(value: K): Boolean {
         if (len <= 0) return false
         val update = Array<SkipListNode<K>?>(top) { null }
@@ -189,7 +180,6 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
         doDelete(find, update)
         return true
     }
-
     fun deleteAt(index: Int): K {
         indexCheck(index)
         val update = Array<SkipListNode<K>?>(top) { null }
@@ -198,7 +188,6 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
         val find = update[0]!!.levelForward[0]!!.node
         return doDelete(find, update)
     }
-
     private fun doDelete(find: SkipListNode<K>, update: Array<SkipListNode<K>?>): K {
         val deleted = update[0]!!.levelForward[0]!!.node.value!!
         for (level in 0 until top) {
@@ -224,7 +213,6 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
         }
         return deleted
     }
-
     fun kth(rank: Int): K? {
         if (rank < 1 || rank > size) return null
         var curRank = 0
@@ -237,7 +225,6 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
         }
         return find.levelForward[0]!!.node.value
     }
-
     fun rank(value: K): Int {
         var curRank = 0
         var find = head
@@ -250,36 +237,30 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
         }
         return curRank + 1
     }
-
     fun exist(value: K): Boolean {
-        val find = lowerNode(value)
+        val (find, _) = lowerNode(value)
         return find.levelForward[0]?.node != null && find.levelForward[0]?.node != tail &&
                 comparator.compare(find.levelForward[0]!!.node.value, value) == 0
     }
-
     fun lower(value: K): K? {
-        val find = lowerNode(value)
+        val (find, _) = lowerNode(value)
         return if (find == head) null else find.value
     }
-
     fun ceiling(value: K): K? {
-        val find = ceilingNode(value)
+        val (find, _) = ceilingNode(value)
         return if (find == tail) null else find.value
     }
-
     fun floor(value: K): K? {
-        val find = floorNode(value)
+        val (find, _) = floorNode(value)
         return if (find == head) null else find.value
     }
-
     fun higher(value: K): K? {
-        val find = higherNode(value)
+        val (find, _) = higherNode(value)
         return if (find == tail) null else find.value
     }
-
     override fun iterator() = SkipListIterator(this)
     override fun listIterator() = SkipListIterator(this)
-    override fun listIterator(index: Int) = TODO("Not yet implemented")
+    override fun listIterator(index: Int) = SkipListIterator(index, this)
     override fun addAll(elements: Collection<K>): Boolean {
         elements.forEach(::add)
         return true
@@ -298,45 +279,39 @@ class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: I
         this.addAll(elements)
     }
     override fun count(element: K) = higherIndex(element) - ceilingIndex(element)
-
     override fun lowerIndex(element: K): Int {
-        TODO("Not yet implemented")
+        val (_, rank) = lowerNode(element)
+        return rank - 1
     }
-
     override fun floorIndex(element: K): Int {
-        TODO("Not yet implemented")
+        val (_, rank) = floorNode(element)
+        return rank - 1
     }
-
     override fun higherIndex(element: K): Int {
-        TODO("Not yet implemented")
+        val (_, rank) = higherNode(element)
+        return rank - 1
     }
-
     override fun ceilingIndex(element: K): Int {
-        TODO("Not yet implemented")
+        val (_, rank) = ceilingNode(element)
+        return rank - 1
     }
-
     override fun get(index: Int): K {
-        TODO("Not yet implemented")
+        indexCheck(index)
+        return kth(index +1)!!
     }
     override fun isEmpty() = size == 0
     override fun removeAt(index: Int) = deleteAt(index)
     override fun remove(element: K) = delete(element)
-
     override fun lastIndexOf(element: K): Int {
-        TODO("Not yet implemented")
+        val (find, rank) = floorNode(element)
+        return if (find != head && comparator.compare(find.value, element) == 0) rank - 1 else -1
     }
-
     override fun indexOf(element: K): Int {
-        TODO("Not yet implemented")
+        val (find, rank) = ceilingNode(element)
+        return if (find != tail && comparator.compare(find.value, element) == 0) rank - 1 else -1
     }
-
-    override fun containsAll(elements: Collection<K>): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun contains(element: K): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun containsAll(elements: Collection<K>) = elements.all { it in this }
+    override fun contains(element: K) = exist(element)
 }
 
 class SkipListNode<V>(val value: V?, maxHeight: Int) {
@@ -349,6 +324,9 @@ data class SkipListNodeWithSpan<V>(var node: SkipListNode<V>, var span: Int = 0)
 class SkipListIterator<K>(
     private val skipList: SkipList<K>
 ) : SortedListIterator<K> {
+    constructor(index: Int, skipList: SkipList<K>) : this(skipList) {
+        idx = index
+    }
     private var iter: SkipListNode<K> = skipList.head
     private var idx: Int = -1
     override fun hasNext() = iter.levelForward[0] != null && iter.levelForward[0]!!.node != skipList.tail
