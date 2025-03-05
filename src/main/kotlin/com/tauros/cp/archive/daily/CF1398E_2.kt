@@ -2,8 +2,7 @@ package com.tauros.cp.archive.daily
 
 import com.tauros.cp.FastReader
 import com.tauros.cp.FastWriter
-import com.tauros.cp.common.int
-import com.tauros.cp.structure.SkipList
+import com.tauros.cp.structure.IntSkipList
 
 /**
  * @author tauros
@@ -16,9 +15,9 @@ private val wt = FastWriter(System.out, bufCap)
 private fun solve() {
     // https://codeforces.com/problemset/problem/1398/E
     val n = rd.ni()
-    val lightList = SkipList<int> { a, b -> a.compareTo(b) }
-    val gtList = SkipList<int> { a, b -> a.compareTo(b) }
-    val ltList = SkipList<int> { a, b -> a.compareTo(b) }
+    val lightList = IntSkipList(64, 30)
+    val gtList = IntSkipList(128, 40)
+    val ltList = IntSkipList(100, 35)
     var (sum, gtSum) = 0L to 0L
     repeat(n) {
         val (tp, d) = rd.ni() to rd.ni()

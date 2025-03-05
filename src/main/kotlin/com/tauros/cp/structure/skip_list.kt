@@ -7,7 +7,7 @@ import kotlin.math.abs
 /**
  * @author tauros
  */
-class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: Int = DEFAULT_GROW_PERCENTILE, comparator: Comparator<K>)
+open class SkipList<K>(val maxHeight: Int = DEFAULT_MAX_HEIGHT, val growPercentile: Int = DEFAULT_GROW_PERCENTILE, comparator: Comparator<K>)
     : SortedList<K>(comparator) {
     companion object {
         val DEFAULT_MAX_HEIGHT = 48
@@ -347,6 +347,11 @@ class SkipListIterator<K>(
         skipList.deleteAt(idx)
     }
 }
+
+class IntSkipList(maxHeight: Int = DEFAULT_MAX_HEIGHT, growPercentile: Int = DEFAULT_GROW_PERCENTILE, comparator: (Int, Int) -> Int = { a, b -> a.compareTo(b) })
+    : SkipList<Int>(maxHeight, growPercentile, comparator)
+class LongSkipList(maxHeight: Int = DEFAULT_MAX_HEIGHT, growPercentile: Int = DEFAULT_GROW_PERCENTILE, comparator: (Long, Long) -> Int = { a, b -> a.compareTo(b) })
+    : SkipList<Long>(maxHeight, growPercentile, comparator)
 
 fun main(args: Array<String>) {
     val list = SkipList<Int> { a, b -> a.compareTo(b) }
